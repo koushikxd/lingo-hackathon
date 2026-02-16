@@ -2,40 +2,22 @@ import fs from "node:fs/promises";
 import path from "node:path";
 
 import { cloneRepository } from "@lingo-dev/api/lib/indexing/codebase";
+import { auth } from "@lingo-dev/auth";
 import prisma from "@lingo-dev/db";
 import { env } from "@lingo-dev/env/server";
 import { LingoDotDevEngine } from "lingo.dev/sdk";
+import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
 const MARKDOWN_EXTENSIONS = new Set([".md", ".mdx", ".markdown"]);
 const IGNORED_DIRECTORIES = new Set([
-  ".git",
-  "node_modules",
-  ".next",
-  "dist",
-  "build",
-  "coverage",
-  ".turbo",
-  ".vercel",
+  ".git", "node_modules", ".next", "dist", "build", "coverage", ".turbo", ".vercel",
 ]);
 
 const supportedLocales = [
-  "en",
-  "es",
-  "fr",
-  "de",
-  "pt-BR",
-  "zh-CN",
-  "ja",
-  "ko",
-  "hi",
-  "ar",
-  "ru",
-  "it",
-  "nl",
-  "tr",
-  "pl",
+  "en", "es", "fr", "de", "pt-BR", "zh-CN", "ja", "ko",
+  "hi", "ar", "ru", "it", "nl", "tr", "pl",
 ] as const;
 
 const bodySchema = z.object({
@@ -43,11 +25,12 @@ const bodySchema = z.object({
   targetLocale: z.enum(supportedLocales),
 });
 
-const engine = new LingoDotDevEngine({
-  apiKey: env.LINGODOTDEV_API_KEY,
-});
+const engine = new LingoDotDevEngine({ apiKey: env.LINGODOTDEV_API_KEY });
 
-async function findMarkdownFiles(rootPath: string, currentPath = rootPath): Promise<string[]> {
+async function findMarkdownFiles(
+  rootPath: string,
+  currentPath = rootPath,
+): Promise<string[]> {
   const entries = await fs.readdir(currentPath, { withFileTypes: true });
   const files: string[] = [];
 
@@ -60,7 +43,10 @@ async function findMarkdownFiles(rootPath: string, currentPath = rootPath): Prom
 
     if (entry.isDirectory()) {
       files.push(...(await findMarkdownFiles(rootPath, fullPath)));
-    } else if (entry.isFile() && MARKDOWN_EXTENSIONS.has(path.extname(entry.name).toLowerCase())) {
+    } else if (
+      entry.isFile() &&
+      MARKDOWN_EXTENSIONS.has(path.extname(entry.name).toLowerCase())
+    ) {
       files.push(fullPath);
     }
   }
@@ -72,10 +58,15 @@ export async function POST(req: Request) {
   let repoPath: string | null = null;
 
   try {
+    const session = await auth.api.getSession({ headers: await headers() });
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const body = bodySchema.parse(await req.json());
 
-    const repository = await prisma.repository.findUnique({
-      where: { id: body.repositoryId },
+    const repository = await prisma.repository.findFirst({
+      where: { id: body.repositoryId, userId: session.user.id },
     });
 
     if (!repository) {
@@ -109,6 +100,14 @@ export async function POST(req: Request) {
         content: translated,
       });
     }
+
+    await prisma.markdownTranslation.create({
+      data: {
+        locale: body.targetLocale,
+        files: translatedFiles,
+        repositoryId: repository.id,
+      },
+    });
 
     return NextResponse.json({ files: translatedFiles, locale: body.targetLocale });
   } catch (error) {

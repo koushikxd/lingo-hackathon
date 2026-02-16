@@ -1,40 +1,29 @@
+import { auth } from "@lingo-dev/auth";
 import { env } from "@lingo-dev/env/server";
 import { LingoDotDevEngine } from "lingo.dev/sdk";
+import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
 const supportedLocales = [
-  "en",
-  "es",
-  "fr",
-  "de",
-  "pt-BR",
-  "zh-CN",
-  "ja",
-  "ko",
-  "hi",
-  "ar",
-  "ru",
-  "it",
-  "nl",
-  "tr",
-  "pl",
+  "en", "es", "fr", "de", "pt-BR", "zh-CN", "ja", "ko",
+  "hi", "ar", "ru", "it", "nl", "tr", "pl",
 ] as const;
 
 const bodySchema = z.object({
-  text: z
-    .string()
-    .transform((value) => value.trim())
-    .pipe(z.string().min(1)),
+  text: z.string().transform((v) => v.trim()).pipe(z.string().min(1)),
   targetLocale: z.enum(supportedLocales),
 });
 
-const engine = new LingoDotDevEngine({
-  apiKey: env.LINGODOTDEV_API_KEY,
-});
+const engine = new LingoDotDevEngine({ apiKey: env.LINGODOTDEV_API_KEY });
 
 export async function POST(req: Request) {
   try {
+    const session = await auth.api.getSession({ headers: await headers() });
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const body = bodySchema.parse(await req.json());
 
     const translatedText = await engine.localizeText(body.text, {

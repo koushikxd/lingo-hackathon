@@ -1,7 +1,9 @@
 import { queryRepository } from "@lingo-dev/api/lib/rag/index";
+import { auth } from "@lingo-dev/auth";
 import prisma from "@lingo-dev/db";
 import { openai } from "@ai-sdk/openai";
 import { streamText } from "ai";
+import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -45,10 +47,15 @@ Only include this section if the codebase has unique patterns, conventions, or a
 
 export async function POST(req: Request) {
   try {
+    const session = await auth.api.getSession({ headers: await headers() });
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const body = bodySchema.parse(await req.json());
 
-    const repository = await prisma.repository.findUnique({
-      where: { id: body.repositoryId },
+    const repository = await prisma.repository.findFirst({
+      where: { id: body.repositoryId, userId: session.user.id },
     });
 
     if (!repository) {

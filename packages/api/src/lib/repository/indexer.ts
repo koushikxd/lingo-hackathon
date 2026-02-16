@@ -18,10 +18,11 @@ type IndexPublicRepositoryInput = {
   repoUrl: string;
   branch: string;
   metadata: RepositoryMetadata;
+  userId: string;
 };
 
 export async function indexPublicRepository(input: IndexPublicRepositoryInput) {
-  const { repoUrl, branch, metadata } = input;
+  const { repoUrl, branch, metadata, userId } = input;
 
   let repository = await prisma.repository.upsert({
     where: { url: metadata.url },
@@ -32,6 +33,7 @@ export async function indexPublicRepository(input: IndexPublicRepositoryInput) {
       stars: metadata.stars,
       language: metadata.language,
       status: "indexing",
+      userId,
     },
     create: {
       name: metadata.name,
@@ -41,6 +43,7 @@ export async function indexPublicRepository(input: IndexPublicRepositoryInput) {
       stars: metadata.stars,
       language: metadata.language,
       status: "indexing",
+      userId,
     },
   });
 

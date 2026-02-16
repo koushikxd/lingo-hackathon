@@ -5,8 +5,12 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import { cloneRepository } from "../lib/indexing/codebase";
-import { deleteRepositoryFromVectorStore, indexRepository, queryRepository } from "../lib/rag";
-import { publicProcedure, router } from "../index";
+import {
+  deleteRepositoryFromVectorStore,
+  indexRepository,
+  queryRepository,
+} from "../lib/rag";
+import { protectedProcedure, publicProcedure, router } from "../index";
 
 const createRepositoryInput = z.object({
   repositoryUrl: z.url(),
@@ -64,138 +68,148 @@ function serializeRepository(repository: {
 }
 
 export const repositoryRouter = router({
-  create: publicProcedure.input(createRepositoryInput).mutation(async ({ input }) => {
-    const repository = await prisma.repository.create({
-      data: {
-        name: input.name,
-        owner: input.owner,
-        url: input.repositoryUrl,
-        description: input.description ?? null,
-        stars: input.stars,
-        language: input.language ?? null,
-        status: "indexed",
-      },
+  list: protectedProcedure.query(async ({ ctx }) => {
+    const repos = await prisma.repository.findMany({
+      where: { userId: ctx.session.user.id },
+      orderBy: { createdAt: "desc" },
     });
-
-    return { repository: serializeRepository(repository) };
+    return repos.map(serializeRepository);
   }),
 
-  index: publicProcedure.input(indexRepositoryInput).mutation(async ({ input }) => {
-    const repository = await prisma.repository.findUnique({
-      where: {
-        id: input.repositoryId,
-      },
-    });
-    if (!repository) {
-      throw new TRPCError({
-        code: "NOT_FOUND",
-        message: "Repository not found",
+  getById: protectedProcedure
+    .input(z.object({ id: z.string().min(1) }))
+    .query(async ({ ctx, input }) => {
+      const repo = await prisma.repository.findFirst({
+        where: { id: input.id, userId: ctx.session.user.id },
+        include: {
+          onboardingDocs: { orderBy: { createdAt: "desc" } },
+          markdownTranslations: { orderBy: { createdAt: "desc" } },
+        },
       });
-    }
+      if (!repo) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Repository not found" });
+      }
+      return {
+        ...serializeRepository(repo),
+        onboardingDocs: repo.onboardingDocs,
+        markdownTranslations: repo.markdownTranslations,
+      };
+    }),
 
-    await prisma.repository.update({
-      where: { id: repository.id },
-      data: {
-        status: "indexing",
-      },
-    });
-
-    let repoPath: string | null = null;
-    try {
-      repoPath = await cloneRepository({
-        repoUrl: repository.url,
-        branch: input.branch,
+  create: protectedProcedure
+    .input(createRepositoryInput)
+    .mutation(async ({ ctx, input }) => {
+      const repository = await prisma.repository.create({
+        data: {
+          name: input.name,
+          owner: input.owner,
+          url: input.repositoryUrl,
+          description: input.description ?? null,
+          stars: input.stars,
+          language: input.language ?? null,
+          status: "indexed",
+          userId: ctx.session.user.id,
+        },
       });
 
-      const vectorIds = await indexRepository({
-        repoPath,
+      return { repository: serializeRepository(repository) };
+    }),
+
+  index: protectedProcedure
+    .input(indexRepositoryInput)
+    .mutation(async ({ ctx, input }) => {
+      const repository = await prisma.repository.findFirst({
+        where: { id: input.repositoryId, userId: ctx.session.user.id },
+      });
+      if (!repository) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Repository not found" });
+      }
+
+      await prisma.repository.update({
+        where: { id: repository.id },
+        data: { status: "indexing" },
+      });
+
+      let repoPath: string | null = null;
+      try {
+        repoPath = await cloneRepository({
+          repoUrl: repository.url,
+          branch: input.branch,
+        });
+
+        const vectorIds = await indexRepository({
+          repoPath,
+          repositoryId: repository.id,
+          repositoryUrl: repository.url,
+        });
+
+        const updated = await prisma.repository.update({
+          where: { id: repository.id },
+          data: {
+            status: "indexed",
+            indexedAt: new Date(),
+            chunksIndexed: vectorIds.length,
+          },
+        });
+
+        return {
+          repository: serializeRepository(updated),
+          vectorCount: vectorIds.length,
+        };
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : "Failed to index repository";
+        await prisma.repository.update({
+          where: { id: repository.id },
+          data: { status: `failed:${message}` },
+        });
+
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message });
+      } finally {
+        if (repoPath) {
+          await fs.rm(repoPath, { recursive: true, force: true });
+        }
+      }
+    }),
+
+  query: publicProcedure
+    .input(queryRepositoryInput)
+    .query(async ({ input }) => {
+      const repository = await prisma.repository.findUnique({
+        where: { id: input.repositoryId },
+      });
+      if (!repository) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Repository not found" });
+      }
+
+      const result = await queryRepository({
+        query: input.query,
         repositoryId: repository.id,
-        repositoryUrl: repository.url,
+        limit: input.limit,
+        scoreThreshold: input.scoreThreshold,
+        maxTokens: input.maxTokens,
       });
+
+      return { repositoryId: repository.id, ...result };
+    }),
+
+  deleteIndex: protectedProcedure
+    .input(deleteIndexInput)
+    .mutation(async ({ ctx, input }) => {
+      const repository = await prisma.repository.findFirst({
+        where: { id: input.repositoryId, userId: ctx.session.user.id },
+      });
+      if (!repository) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Repository not found" });
+      }
+
+      await deleteRepositoryFromVectorStore(repository.id);
 
       const updated = await prisma.repository.update({
         where: { id: repository.id },
-        data: {
-          status: "indexed",
-          indexedAt: new Date(),
-          chunksIndexed: vectorIds.length,
-        },
+        data: { status: "indexed", chunksIndexed: 0 },
       });
 
-      return {
-        repository: serializeRepository(updated),
-        vectorCount: vectorIds.length,
-      };
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to index repository";
-      await prisma.repository.update({
-        where: { id: repository.id },
-        data: {
-          status: `failed:${message}`,
-        },
-      });
-
-      throw new TRPCError({
-        code: "INTERNAL_SERVER_ERROR",
-        message,
-      });
-    } finally {
-      if (repoPath) {
-        await fs.rm(repoPath, { recursive: true, force: true });
-      }
-    }
-  }),
-
-  query: publicProcedure.input(queryRepositoryInput).query(async ({ input }) => {
-    const repository = await prisma.repository.findUnique({
-      where: {
-        id: input.repositoryId,
-      },
-    });
-    if (!repository) {
-      throw new TRPCError({
-        code: "NOT_FOUND",
-        message: "Repository not found",
-      });
-    }
-
-    const result = await queryRepository({
-      query: input.query,
-      repositoryId: repository.id,
-      limit: input.limit,
-      scoreThreshold: input.scoreThreshold,
-      maxTokens: input.maxTokens,
-    });
-
-    return {
-      repositoryId: repository.id,
-      ...result,
-    };
-  }),
-
-  deleteIndex: publicProcedure.input(deleteIndexInput).mutation(async ({ input }) => {
-    const repository = await prisma.repository.findUnique({
-      where: {
-        id: input.repositoryId,
-      },
-    });
-    if (!repository) {
-      throw new TRPCError({
-        code: "NOT_FOUND",
-        message: "Repository not found",
-      });
-    }
-
-    await deleteRepositoryFromVectorStore(repository.id);
-
-    const updated = await prisma.repository.update({
-      where: { id: repository.id },
-      data: {
-        status: "indexed",
-        chunksIndexed: 0,
-      },
-    });
-
-    return { repository: serializeRepository(updated) };
-  }),
+      return { repository: serializeRepository(updated) };
+    }),
 });

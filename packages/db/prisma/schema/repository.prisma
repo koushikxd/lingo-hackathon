@@ -10,4 +10,33 @@ model Repository {
   status        String   @default("indexed")
   indexedAt     DateTime @default(now())
   createdAt     DateTime @default(now())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  onboardingDocs       OnboardingDoc[]
+  markdownTranslations MarkdownTranslation[]
+
+  @@index([userId])
+}
+
+model OnboardingDoc {
+  id           String     @id @default(cuid())
+  content      String
+  locale       String     @default("en")
+  repositoryId String
+  repository   Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+  createdAt    DateTime   @default(now())
+
+  @@index([repositoryId])
+}
+
+model MarkdownTranslation {
+  id           String     @id @default(cuid())
+  locale       String
+  files        Json
+  repositoryId String
+  repository   Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+  createdAt    DateTime   @default(now())
+
+  @@index([repositoryId])
 }
