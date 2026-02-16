@@ -25,7 +25,7 @@ export function calculateAvailableTokens(
   model: string,
   promptTokens: number,
   completionReserve = 2048,
-  buffer = 512
+  buffer = 512,
 ) {
   const contextLimit = getModelContextLimit(model);
   return Math.max(0, contextLimit - promptTokens - completionReserve - buffer);

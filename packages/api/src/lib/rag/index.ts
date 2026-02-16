@@ -125,14 +125,14 @@ export async function queryRepository(input: QueryRepositoryInput): Promise<Sear
 
 export async function deleteFromVectorStore(
   vectorIds: string[],
-  collectionName = DEFAULT_COLLECTION_NAME
+  collectionName = DEFAULT_COLLECTION_NAME,
 ) {
   await deleteVectors(vectorIds, collectionName);
 }
 
 export async function deleteRepositoryFromVectorStore(
   repositoryId: string,
-  collectionName = DEFAULT_COLLECTION_NAME
+  collectionName = DEFAULT_COLLECTION_NAME,
 ) {
   await deleteVectorsByRepository(repositoryId, collectionName);
 }

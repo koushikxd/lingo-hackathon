@@ -14,6 +14,7 @@ export type GitHubRepositoryMetadata = {
   description: string | null;
   stars: number;
   language: string | null;
+  defaultBranch: string;
 };
 
 const octokit = new Octokit({
@@ -54,7 +55,7 @@ export function parseGitHubRepositoryUrl(input: string): ParsedGitHubRepository 
 }
 
 export async function fetchGitHubRepositoryMetadata(
-  input: ParsedGitHubRepository
+  input: ParsedGitHubRepository,
 ): Promise<GitHubRepositoryMetadata> {
   const response = await octokit.repos.get({
     owner: input.owner,
@@ -68,5 +69,6 @@ export async function fetchGitHubRepositoryMetadata(
     description: response.data.description ?? null,
     stars: response.data.stargazers_count ?? 0,
     language: response.data.language ?? null,
+    defaultBranch: response.data.default_branch,
   };
 }

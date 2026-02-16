@@ -2,10 +2,7 @@ import { indexPublicRepository } from "@lingo-dev/api/lib/repository/indexer";
 import { NextResponse } from "next/server";
 import { ZodError, z } from "zod";
 
-import {
-  fetchGitHubRepositoryMetadata,
-  parseGitHubRepositoryUrl,
-} from "@/lib/github";
+import { fetchGitHubRepositoryMetadata, parseGitHubRepositoryUrl } from "@/lib/github";
 
 const bodySchema = z.object({
   repoUrl: z.string().url(),
@@ -22,12 +19,12 @@ export async function POST(req: Request) {
           success: false,
           error: "Invalid GitHub URL. Use format https://github.com/owner/repo",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     const metadata = await fetchGitHubRepositoryMetadata(parsed);
-    const branch = body.branch ?? "main";
+    const branch = body.branch ?? metadata.defaultBranch;
     const indexed = await indexPublicRepository({
       repoUrl: parsed.normalizedUrl,
       branch,
@@ -47,7 +44,7 @@ export async function POST(req: Request) {
           success: false,
           error: "Invalid request body. Provide repoUrl and optional branch.",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
     const message = error instanceof Error ? error.message : "Repository indexing failed";
@@ -56,7 +53,7 @@ export async function POST(req: Request) {
         success: false,
         error: message,
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

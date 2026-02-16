@@ -12,6 +12,7 @@ export const env = createEnv({
     QDRANT_API_KEY: z.string().min(1),
     OPENAI_API_KEY: z.string().min(1),
     GITHUB_TOKEN: z.string().min(1),
+    LINGODOTDEV_API_KEY: z.string().min(1),
     NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
   },
   runtimeEnv: process.env,

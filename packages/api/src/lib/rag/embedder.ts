@@ -29,7 +29,7 @@ export async function generateEmbeddings(texts: string[]): Promise<EmbeddingResu
     for (const embedding of result.embeddings) {
       if (embedding.length !== EMBEDDING_DIMENSION) {
         throw new Error(
-          `Unexpected embedding dimension ${embedding.length}, expected ${EMBEDDING_DIMENSION}`
+          `Unexpected embedding dimension ${embedding.length}, expected ${EMBEDDING_DIMENSION}`,
         );
       }
       embeddings.push(embedding);

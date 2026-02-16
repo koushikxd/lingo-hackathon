@@ -5,11 +5,7 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import { cloneRepository } from "../lib/indexing/codebase";
-import {
-  deleteRepositoryFromVectorStore,
-  indexRepository,
-  queryRepository,
-} from "../lib/rag";
+import { deleteRepositoryFromVectorStore, indexRepository, queryRepository } from "../lib/rag";
 import { publicProcedure, router } from "../index";
 
 const createRepositoryInput = z.object({

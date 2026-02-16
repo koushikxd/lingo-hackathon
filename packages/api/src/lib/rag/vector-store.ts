@@ -81,7 +81,10 @@ export async function ensureCollection(collectionName = DEFAULT_COLLECTION_NAME)
   }
 }
 
-export async function upsertVectors(points: VectorPoint[], collectionName = DEFAULT_COLLECTION_NAME) {
+export async function upsertVectors(
+  points: VectorPoint[],
+  collectionName = DEFAULT_COLLECTION_NAME,
+) {
   if (points.length === 0) {
     return [];
   }
@@ -103,7 +106,13 @@ export async function upsertVectors(points: VectorPoint[], collectionName = DEFA
 }
 
 export async function searchVectors(input: SearchInput): Promise<VectorSearchResult[]> {
-  const { collectionName = DEFAULT_COLLECTION_NAME, embedding, filters, limit, scoreThreshold } = input;
+  const {
+    collectionName = DEFAULT_COLLECTION_NAME,
+    embedding,
+    filters,
+    limit,
+    scoreThreshold,
+  } = input;
   await ensureCollection(collectionName);
 
   const client = getQdrantClient();
@@ -145,10 +154,7 @@ export async function searchVectors(input: SearchInput): Promise<VectorSearchRes
     }));
 }
 
-export async function deleteVectors(
-  vectorIds: string[],
-  collectionName = DEFAULT_COLLECTION_NAME
-) {
+export async function deleteVectors(vectorIds: string[], collectionName = DEFAULT_COLLECTION_NAME) {
   if (vectorIds.length === 0) {
     return;
   }
@@ -163,7 +169,7 @@ export async function deleteVectors(
 
 export async function deleteVectorsByRepository(
   repositoryId: string,
-  collectionName = DEFAULT_COLLECTION_NAME
+  collectionName = DEFAULT_COLLECTION_NAME,
 ) {
   await ensureCollection(collectionName);
   const client = getQdrantClient();
