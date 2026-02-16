@@ -1,0 +1,13 @@
+model Repository {
+  id            String   @id @default(cuid())
+  name          String
+  owner         String
+  url           String   @unique
+  description   String?
+  stars         Int      @default(0)
+  language      String?
+  chunksIndexed Int      @default(0)
+  status        String   @default("indexed")
+  indexedAt     DateTime @default(now())
+  createdAt     DateTime @default(now())
+}

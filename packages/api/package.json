@@ -11,13 +11,19 @@
   },
   "scripts": {},
   "dependencies": {
+    "@ai-sdk/openai": "^3.0.29",
     "@lingo-dev/auth": "workspace:*",
     "@lingo-dev/db": "workspace:*",
     "@lingo-dev/env": "workspace:*",
+    "@mastra/rag": "^2.1.0",
+    "@qdrant/js-client-rest": "^1.16.2",
     "@trpc/client": "catalog:",
     "@trpc/server": "catalog:",
+    "ai": "^6.0.3",
     "dotenv": "catalog:",
+    "nanoid": "^5.1.6",
     "next": "catalog:",
+    "simple-git": "^3.31.1",
     "zod": "catalog:"
   },
   "devDependencies": {
