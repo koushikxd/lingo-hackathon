@@ -123,7 +123,9 @@ export default function NewRepoPage() {
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       <div>
-        <h1 className="text-lg font-semibold tracking-tight">Index Repository</h1>
+        <h1 className="text-lg font-semibold tracking-tight">
+          Index Repository
+        </h1>
         <p className="text-xs text-muted-foreground">
           Select a repository from your GitHub account or enter a URL manually
         </p>
@@ -153,7 +155,9 @@ export default function NewRepoPage() {
             </div>
           ) : filtered.length === 0 ? (
             <p className="py-8 text-center text-xs text-muted-foreground">
-              {search ? "No repositories match your search" : "No repositories found"}
+              {search
+                ? "No repositories match your search"
+                : "No repositories found"}
             </p>
           ) : (
             <div className="max-h-96 space-y-1.5 overflow-y-auto">
@@ -162,7 +166,7 @@ export default function NewRepoPage() {
                   key={repo.id}
                   disabled={indexingId !== null}
                   onClick={() => handleIndex(repo)}
-                  className="flex w-full items-center justify-between rounded-md border p-3 text-left transition-colors hover:bg-muted/50 disabled:opacity-50"
+                  className="flex w-full items-center justify-between border p-3 text-left transition-colors hover:bg-muted/50 disabled:opacity-50 cursor-pointer"
                 >
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
@@ -170,7 +174,10 @@ export default function NewRepoPage() {
                         {repo.fullName}
                       </span>
                       {repo.isPrivate ? (
-                        <Badge variant="outline" className="shrink-0 text-[10px]">
+                        <Badge
+                          variant="outline"
+                          className="shrink-0 text-[10px]"
+                        >
                           <Lock className="mr-0.5 size-2.5" />
                           Private
                         </Badge>
@@ -184,7 +191,7 @@ export default function NewRepoPage() {
                     <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
                       {repo.language ? (
                         <span className="flex items-center gap-1">
-                          <span className="size-2 rounded-full bg-primary" />
+                          <span className="size-2 bg-primary" />
                           {repo.language}
                         </span>
                       ) : null}
@@ -207,9 +214,7 @@ export default function NewRepoPage() {
       <Card>
         <CardHeader>
           <CardTitle>Manual URL</CardTitle>
-          <CardDescription>
-            Or paste any GitHub repository URL
-          </CardDescription>
+          <CardDescription>Or paste any GitHub repository URL</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleManualSubmit} className="flex gap-2">
