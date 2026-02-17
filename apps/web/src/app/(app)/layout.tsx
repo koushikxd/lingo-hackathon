@@ -249,7 +249,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             </BreadcrumbList>
           </Breadcrumb>
         </header>
-        <div className="flex-1 overflow-auto p-6">{children}</div>
+        <div className="flex-1 overflow-auto px-3">{children}</div>
       </SidebarInset>
     </SidebarProvider>
   );

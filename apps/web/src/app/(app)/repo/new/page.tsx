@@ -236,13 +236,13 @@ export default function NewRepoPage() {
             </p>
           </div>
         ) : (
-          <div className="max-h-112 space-y-1 overflow-y-auto">
+          <div className="max-h-112 space-y-3 overflow-y-auto">
             {visibleRepos.map((repo) => (
               <button
                 key={repo.id}
                 disabled={indexMutation.isPending}
                 onClick={() => indexMutation.mutate(repo.url)}
-                className="flex w-full items-center justify-between border border-border bg-card p-3 text-left transition-colors duration-150 ease-out hover:bg-muted/50 active:scale-[0.99] disabled:opacity-50 motion-safe:transition-[background-color,transform] cursor-pointer"
+                className="flex w-full items-center justify-between border border-neutral-700 bg-neutral-900 p-3 text-left transition-colors duration-150 ease-out hover:bg-muted/50 active:scale-[0.99] disabled:opacity-50 motion-safe:transition-[background-color,transform] cursor-pointer"
               >
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">

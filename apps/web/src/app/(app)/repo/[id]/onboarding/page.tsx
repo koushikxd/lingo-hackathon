@@ -192,8 +192,8 @@ export default function OnboardingPage({
 
   return (
     <div className="flex h-[calc(100vh-4rem)] flex-col bg-background">
-      <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center justify-between border-b bg-background/95 px-6 backdrop-blur supports-backdrop-filter:bg-background/60">
-        <div className="flex items-center gap-3">
+      <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center justify-between border-b bg-background/95 px-0 backdrop-blur supports-backdrop-filter:bg-background/60">
+        <div className="flex items-center gap-2">
           <div className="flex items-center justify-center bg-primary/10 p-1.5">
             <BookOpen className="size-4 text-primary" />
           </div>

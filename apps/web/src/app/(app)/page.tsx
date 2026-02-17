@@ -114,7 +114,7 @@ export default function DashboardPage() {
               <ContextMenuTrigger>
                 <Link
                   href={`/repo/${repo.id}` as never}
-                  className="block border border-border bg-card p-4 transition-colors duration-150 ease-out hover:bg-muted/50 active:scale-[0.99] motion-safe:transition-[background-color,transform]"
+                  className="block border border-neutral-700 bg-neutral-900 p-4 transition-colors duration-150 ease-out hover:bg-muted/50 active:scale-[0.99] motion-safe:transition-[background-color,transform]"
                 >
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium">

@@ -81,7 +81,7 @@ export default function RepoDetailPage({
       <div className="grid gap-3 sm:grid-cols-2">
         <Link
           href={`/repo/${id}/onboarding` as never}
-          className="group flex flex-col justify-between border border-border bg-card p-4 transition-colors duration-150 ease-out hover:bg-muted/50 active:scale-[0.99] motion-safe:transition-[background-color,transform]"
+          className="group flex flex-col justify-between border border-neutral-700 bg-neutral-900 p-4 transition-colors duration-150 ease-out hover:bg-muted/50 active:scale-[0.99] motion-safe:transition-[background-color,transform]"
         >
           <div>
             <div className="flex items-center gap-2 text-sm font-medium">
@@ -107,7 +107,7 @@ export default function RepoDetailPage({
 
         <Link
           href={`/repo/${id}/markdown` as never}
-          className="group flex flex-col justify-between border border-border bg-card p-4 transition-colors duration-150 ease-out hover:bg-muted/50 active:scale-[0.99] motion-safe:transition-[background-color,transform]"
+          className="group flex flex-col justify-between border border-neutral-700 bg-neutral-900 p-4 transition-colors duration-150 ease-out hover:bg-muted/50 active:scale-[0.99] motion-safe:transition-[background-color,transform]"
         >
           <div>
             <div className="flex items-center gap-2 text-sm font-medium">
@@ -140,7 +140,7 @@ export default function RepoDetailPage({
               <Link
                 key={doc.id}
                 href={`/repo/${id}/onboarding` as never}
-                className="flex items-center justify-between border border-border bg-card px-4 py-3 transition-colors duration-150 ease-out hover:bg-muted/50"
+                className="flex items-center justify-between border border-neutral-700 bg-neutral-900 px-4 py-3 transition-colors duration-150 ease-out hover:bg-muted/50"
               >
                 <div className="flex items-center gap-2">
                   <Badge variant="outline" className="text-[10px]">
