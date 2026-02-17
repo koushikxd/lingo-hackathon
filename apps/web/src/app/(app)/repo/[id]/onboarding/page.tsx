@@ -5,22 +5,52 @@ import dynamic from "next/dynamic";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import remarkGfm from "remark-gfm";
 import { toast } from "sonner";
-import { Check, ClipboardCopy, RefreshCw } from "lucide-react";
+import {
+  Check,
+  ClipboardCopy,
+  RefreshCw,
+  BookOpen,
+  Loader2,
+  Sparkles,
+  ChevronDown,
+} from "lucide-react";
 
 import { trpc } from "@/utils/trpc";
 import { LANGUAGES, PROSE_CLASSES } from "@/lib/constants";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
+import { Button, buttonVariants } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Spinner } from "@/components/ui/spinner";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const ReactMarkdown = dynamic(() => import("react-markdown"), { ssr: false });
 
 type GenerateState = "idle" | "generating" | "translating" | "done";
 
-export default function OnboardingPage({ params }: { params: Promise<{ id: string }> }) {
+export default function OnboardingPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   const { id } = use(params);
   const queryClient = useQueryClient();
 
@@ -49,7 +79,9 @@ export default function OnboardingPage({ params }: { params: Promise<{ id: strin
     : null;
 
   const displayContent =
-    state !== "idle" ? streamContent : (selectedDoc?.content ?? latestDoc?.content ?? "");
+    state !== "idle"
+      ? streamContent
+      : (selectedDoc?.content ?? latestDoc?.content ?? "");
   const displayLocale = selectedDoc?.locale ?? latestDoc?.locale ?? "en";
   const hasNoDocs = repo && repo.onboardingDocs.length === 0;
 
@@ -106,7 +138,11 @@ export default function OnboardingPage({ params }: { params: Promise<{ id: strin
       const saveRes = await fetch("/api/onboarding/save", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ repositoryId: id, content: accumulated, locale }),
+        body: JSON.stringify({
+          repositoryId: id,
+          content: accumulated,
+          locale,
+        }),
       });
 
       if (saveRes.ok) {
@@ -131,116 +167,254 @@ export default function OnboardingPage({ params }: { params: Promise<{ id: strin
 
   if (isLoading) {
     return (
-      <div className="mx-auto max-w-3xl space-y-4">
-        <Skeleton className="h-6 w-48" />
-        <Skeleton className="h-4 w-32" />
-        <Skeleton className="h-96 w-full" />
+      <div className="mx-auto max-w-3xl space-y-8 py-8 px-4">
+        <div className="space-y-4">
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-4 w-32" />
+        </div>
+        <div className="space-y-4">
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-3/4" />
+        </div>
       </div>
     );
   }
 
   if (!repo) {
-    return <p className="py-12 text-center text-sm text-muted-foreground">Repository not found</p>;
+    return (
+      <div className="flex h-[calc(100vh-4rem)] flex-col items-center justify-center gap-2">
+        <BookOpen className="size-8 text-muted-foreground" />
+        <p className="text-sm text-muted-foreground">Repository not found</p>
+      </div>
+    );
   }
 
   return (
-    <div className="motion-safe:animate-in motion-safe:fade-in mx-auto max-w-3xl space-y-6">
-      <div>
-        <h1 className="text-lg font-semibold tracking-tight text-pretty">Onboarding Docs</h1>
-        <p className="text-xs text-muted-foreground">
-          {repo.owner}/{repo.name}
-        </p>
-      </div>
-
-      {hasNoDocs && state === "idle" ? (
-        <div className="flex flex-col items-center justify-center gap-3 rounded-md border border-dashed py-16">
-          <Spinner className="size-5" />
-          <p className="text-sm text-muted-foreground">Generating onboarding documentation\u2026</p>
-          <p className="text-xs text-muted-foreground">This happens automatically after indexing</p>
+    <div className="flex h-[calc(100vh-4rem)] flex-col bg-background">
+      <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center justify-between border-b bg-background/95 px-6 backdrop-blur supports-backdrop-filter:bg-background/60">
+        <div className="flex items-center gap-3">
+          <div className="flex items-center justify-center bg-primary/10 p-1.5">
+            <BookOpen className="size-4 text-primary" />
+          </div>
+          <div>
+            <h1 className="text-sm font-semibold">Onboarding Docs</h1>
+            <p className="text-[10px] text-muted-foreground">
+              {repo.owner}/{repo.name}
+            </p>
+          </div>
         </div>
-      ) : (
-        <>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              {repo.onboardingDocs.length > 1 ? (
-                <NativeSelect
-                  value={selectedDocId ?? latestDoc?.id ?? ""}
-                  onChange={(e) => {
-                    setSelectedDocId(e.target.value || null);
-                    setState("idle");
-                    setStreamContent("");
-                  }}
-                  className="text-xs"
-                  aria-label="Select document version"
+
+        <div className="flex items-center gap-2">
+          {repo.onboardingDocs.length > 0 && (
+            <>
+              <DropdownMenu>
+                <DropdownMenuTrigger
+                  className={buttonVariants({
+                    variant: "outline",
+                    size: "sm",
+                    className: "h-8 gap-2",
+                  })}
                 >
-                  {repo.onboardingDocs.map((doc) => (
-                    <NativeSelectOption key={doc.id} value={doc.id}>
-                      {LANGUAGES.find((l) => l.code === doc.locale)?.label ?? doc.locale} —{" "}
-                      {new Date(doc.createdAt).toLocaleDateString()}
-                    </NativeSelectOption>
+                  <span className="text-xs">
+                    {LANGUAGES.find(
+                      (l) =>
+                        l.code === (selectedDoc?.locale ?? latestDoc?.locale),
+                    )?.label ?? "English"}
+                  </span>
+                  <span className="text-[10px] text-muted-foreground">
+                    v
+                    {selectedDocId
+                      ? repo.onboardingDocs.findIndex(
+                          (d) => d.id === selectedDocId,
+                        ) + 1
+                      : repo.onboardingDocs.length}
+                  </span>
+                  <ChevronDown className="size-3 opacity-50" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  {repo.onboardingDocs.map((doc, i) => (
+                    <DropdownMenuItem
+                      key={doc.id}
+                      onClick={() => {
+                        setSelectedDocId(doc.id);
+                        setState("idle");
+                        setStreamContent("");
+                      }}
+                      className="flex flex-col items-start gap-1"
+                    >
+                      <div className="flex items-center gap-2 w-full justify-between">
+                        <span className="font-medium">
+                          {LANGUAGES.find((l) => l.code === doc.locale)
+                            ?.label ?? doc.locale}
+                        </span>
+                        {doc.id === (selectedDocId ?? latestDoc?.id) && (
+                          <Check className="size-3" />
+                        )}
+                      </div>
+                      <span className="text-[10px] text-muted-foreground">
+                        {new Date(doc.createdAt).toLocaleDateString()} • Version{" "}
+                        {repo.onboardingDocs.length - i}
+                      </span>
+                    </DropdownMenuItem>
                   ))}
-                </NativeSelect>
-              ) : (
-                <Badge variant="outline" className="text-[10px]">
-                  {displayLocale}
-                </Badge>
-              )}
-            </div>
-            <div className="flex items-center gap-2">
-              {displayContent ? (
-                <Button variant="outline" size="sm" onClick={handleCopy} aria-label="Copy to clipboard">
-                  {copied ? <Check className="size-3" /> : <ClipboardCopy className="size-3" />}
-                  {copied ? "Copied" : "Copy"}
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              <div className="h-4 w-px bg-border mx-1" />
+
+              <DropdownMenu>
+                <DropdownMenuTrigger
+                  className={buttonVariants({
+                    variant: "ghost",
+                    size: "sm",
+                    className: "h-8 gap-2",
+                  })}
+                >
+                  <RefreshCw className="size-3.5" />
+                  <span className="hidden sm:inline">Regenerate</span>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-64 p-3">
+                  <div className="space-y-3">
+                    <div className="space-y-1">
+                      <h4 className="text-xs font-medium leading-none">
+                        New Version
+                      </h4>
+                      <p className="text-[10px] text-muted-foreground">
+                        Generate a fresh guide in a specific language.
+                      </p>
+                    </div>
+                    <div className="space-y-2">
+                      <Select
+                        value={locale}
+                        onValueChange={(val) => val && setLocale(val)}
+                        disabled={
+                          state === "generating" || state === "translating"
+                        }
+                      >
+                        <SelectTrigger className="h-7 text-xs">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {LANGUAGES.map((lang) => (
+                            <SelectItem
+                              key={lang.code}
+                              value={lang.code}
+                              className="text-xs"
+                            >
+                              {lang.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Button
+                        size="sm"
+                        className="w-full h-7 text-xs"
+                        onClick={handleRegenerate}
+                        disabled={
+                          state === "generating" || state === "translating"
+                        }
+                      >
+                        {state === "generating" ? (
+                          <>
+                            <Loader2 className="mr-2 size-3 animate-spin" />{" "}
+                            Generating...
+                          </>
+                        ) : state === "translating" ? (
+                          <>
+                            <Loader2 className="mr-2 size-3 animate-spin" />{" "}
+                            Translating...
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles className="mr-2 size-3" /> Generate
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger
+                    className={buttonVariants({
+                      variant: "ghost",
+                      size: "icon",
+                      className: "h-8 w-8",
+                    })}
+                    onClick={handleCopy}
+                    disabled={!displayContent}
+                  >
+                    {copied ? (
+                      <Check className="size-3.5" />
+                    ) : (
+                      <ClipboardCopy className="size-3.5" />
+                    )}
+                  </TooltipTrigger>
+                  <TooltipContent>Copy content</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </>
+          )}
+        </div>
+      </header>
+
+      <ScrollArea className="flex-1">
+        <div className="mx-auto max-w-3xl px-8 py-12">
+          {hasNoDocs && state === "idle" ? (
+            <div className="flex flex-col items-center justify-center gap-6 border border-dashed border-border p-16 text-center bg-card/50">
+              <div className="bg-muted p-4 border border-border">
+                <Sparkles className="size-6 text-primary" />
+              </div>
+              <div className="space-y-2 max-w-sm">
+                <h3 className="text-base font-semibold">
+                  No onboarding docs yet
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  Generate comprehensive onboarding documentation for your
+                  repository automatically using AI.
+                </p>
+              </div>
+              <div className="flex items-center gap-2 w-full max-w-xs">
+                <Select
+                  value={locale}
+                  onValueChange={(val) => val && setLocale(val)}
+                >
+                  <SelectTrigger className="h-9 text-xs flex-1 bg-background">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {LANGUAGES.map((lang) => (
+                      <SelectItem
+                        key={lang.code}
+                        value={lang.code}
+                        className="text-xs"
+                      >
+                        {lang.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button
+                  size="sm"
+                  onClick={handleRegenerate}
+                  className="h-9 px-4 text-xs"
+                >
+                  Generate
                 </Button>
-              ) : null}
+              </div>
             </div>
-          </div>
-
-          {displayContent ? (
-            <div ref={docRef} className={PROSE_CLASSES}>
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>{displayContent}</ReactMarkdown>
-            </div>
-          ) : null}
-
-          <Separator />
-
-          <div className="flex items-center gap-2">
-            <NativeSelect
-              value={locale}
-              onChange={(e) => setLocale(e.target.value)}
-              disabled={state === "generating" || state === "translating"}
-              className="text-xs"
-              aria-label="Target language"
-            >
-              {LANGUAGES.map((lang) => (
-                <NativeSelectOption key={lang.code} value={lang.code}>
-                  {lang.label}
-                </NativeSelectOption>
-              ))}
-            </NativeSelect>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleRegenerate}
-              disabled={state === "generating" || state === "translating"}
-            >
-              {state === "generating" ? (
-                <>
-                  <Spinner className="size-3" /> Generating\u2026
-                </>
-              ) : state === "translating" ? (
-                <>
-                  <Spinner className="size-3" /> Translating\u2026
-                </>
-              ) : (
-                <>
-                  <RefreshCw className="size-3" aria-hidden="true" /> Regenerate
-                </>
-              )}
-            </Button>
-          </div>
-        </>
-      )}
+          ) : (
+            <article ref={docRef} className={PROSE_CLASSES}>
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                {displayContent}
+              </ReactMarkdown>
+            </article>
+          )}
+        </div>
+      </ScrollArea>
     </div>
   );
 }

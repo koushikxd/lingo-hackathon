@@ -9,9 +9,15 @@ import { trpc } from "@/utils/trpc";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 
-export default function RepoDetailPage({ params }: { params: Promise<{ id: string }> }) {
+export default function RepoDetailPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   const { id } = use(params);
-  const { data: repo, isLoading } = useQuery(trpc.repository.getById.queryOptions({ id }));
+  const { data: repo, isLoading } = useQuery(
+    trpc.repository.getById.queryOptions({ id }),
+  );
 
   if (isLoading) {
     return (
@@ -30,7 +36,11 @@ export default function RepoDetailPage({ params }: { params: Promise<{ id: strin
   }
 
   if (!repo) {
-    return <p className="py-12 text-center text-sm text-muted-foreground">Repository not found</p>;
+    return (
+      <p className="py-12 text-center text-sm text-muted-foreground">
+        Repository not found
+      </p>
+    );
   }
 
   return (
@@ -40,18 +50,20 @@ export default function RepoDetailPage({ params }: { params: Promise<{ id: strin
           {repo.owner}/{repo.name}
         </h1>
         {repo.description ? (
-          <p className="mt-1 text-xs text-muted-foreground">{repo.description}</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            {repo.description}
+          </p>
         ) : null}
         <div className="mt-3 flex items-center gap-3 text-xs text-muted-foreground">
           <Badge
-            variant={repo.status === "indexed" ? "secondary" : "outline"}
+            variant={repo.status === "indexed" ? "default" : "outline"}
             className="text-[10px]"
           >
             {repo.status}
           </Badge>
           {repo.language ? (
             <span className="flex items-center gap-1">
-              <span className="size-2 rounded-full bg-primary" aria-hidden="true" />
+              <span className="size-2 bg-primary" aria-hidden="true" />
               {repo.language}
             </span>
           ) : null}
@@ -69,7 +81,7 @@ export default function RepoDetailPage({ params }: { params: Promise<{ id: strin
       <div className="grid gap-3 sm:grid-cols-2">
         <Link
           href={`/repo/${id}/onboarding` as never}
-          className="group flex flex-col justify-between rounded-md border border-border/50 p-4 transition-[background-color,border-color] duration-150 ease-out hover:border-border hover:bg-muted/30 active:scale-[0.99] motion-safe:transition-[background-color,border-color,transform]"
+          className="group flex flex-col justify-between border border-border bg-card p-4 transition-colors duration-150 ease-out hover:bg-muted/50 active:scale-[0.99] motion-safe:transition-[background-color,transform]"
         >
           <div>
             <div className="flex items-center gap-2 text-sm font-medium">
@@ -84,15 +96,18 @@ export default function RepoDetailPage({ params }: { params: Promise<{ id: strin
             <span className="text-xs tabular-nums text-muted-foreground">
               {repo.onboardingDocs.length > 0
                 ? `${repo.onboardingDocs.length} doc${repo.onboardingDocs.length === 1 ? "" : "s"} generated`
-                : "Auto-generating\u2026"}
+                : "Auto-generating..."}
             </span>
-            <ArrowRight className="size-3.5 text-muted-foreground transition-transform duration-150 ease-out group-hover:translate-x-0.5" aria-hidden="true" />
+            <ArrowRight
+              className="size-3.5 text-muted-foreground transition-transform duration-150 ease-out group-hover:translate-x-0.5"
+              aria-hidden="true"
+            />
           </div>
         </Link>
 
         <Link
           href={`/repo/${id}/markdown` as never}
-          className="group flex flex-col justify-between rounded-md border border-border/50 p-4 transition-[background-color,border-color] duration-150 ease-out hover:border-border hover:bg-muted/30 active:scale-[0.99] motion-safe:transition-[background-color,border-color,transform]"
+          className="group flex flex-col justify-between border border-border bg-card p-4 transition-colors duration-150 ease-out hover:bg-muted/50 active:scale-[0.99] motion-safe:transition-[background-color,transform]"
         >
           <div>
             <div className="flex items-center gap-2 text-sm font-medium">
@@ -109,7 +124,10 @@ export default function RepoDetailPage({ params }: { params: Promise<{ id: strin
                 ? `${repo.markdownTranslations.length} translation${repo.markdownTranslations.length === 1 ? "" : "s"} saved`
                 : "No translations yet"}
             </span>
-            <ArrowRight className="size-3.5 text-muted-foreground transition-transform duration-150 ease-out group-hover:translate-x-0.5" aria-hidden="true" />
+            <ArrowRight
+              className="size-3.5 text-muted-foreground transition-transform duration-150 ease-out group-hover:translate-x-0.5"
+              aria-hidden="true"
+            />
           </div>
         </Link>
       </div>
@@ -122,7 +140,7 @@ export default function RepoDetailPage({ params }: { params: Promise<{ id: strin
               <Link
                 key={doc.id}
                 href={`/repo/${id}/onboarding` as never}
-                className="flex items-center justify-between rounded-md border border-border/50 px-4 py-3 transition-[background-color,border-color] duration-150 ease-out hover:border-border hover:bg-muted/30"
+                className="flex items-center justify-between border border-border bg-card px-4 py-3 transition-colors duration-150 ease-out hover:bg-muted/50"
               >
                 <div className="flex items-center gap-2">
                   <Badge variant="outline" className="text-[10px]">

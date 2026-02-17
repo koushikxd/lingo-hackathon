@@ -101,7 +101,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           <SidebarMenu>
             <SidebarMenuItem>
               <SidebarMenuButton size="lg" render={<Link href="/" />}>
-                <div className="bg-primary text-primary-foreground flex size-6 items-center justify-center rounded-md">
+                <div className="bg-primary text-primary-foreground flex size-6 items-center justify-center">
                   <Globe className="size-3.5" aria-hidden="true" />
                 </div>
                 <span className="text-sm font-semibold tracking-tight">
@@ -181,7 +181,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                         {session.user.email}
                       </span>
                     </div>
-                    <ChevronsUpDown className="ml-auto size-4" aria-hidden="true" />
+                    <ChevronsUpDown
+                      className="ml-auto size-4"
+                      aria-hidden="true"
+                    />
                   </DropdownMenuTrigger>
                   <DropdownMenuContent
                     className="w-56"

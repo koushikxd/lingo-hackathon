@@ -5,33 +5,79 @@ import dynamic from "next/dynamic";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import remarkGfm from "remark-gfm";
 import { toast } from "sonner";
-import { Download, FileText, Languages } from "lucide-react";
+import {
+  Download,
+  FileText,
+  Languages,
+  Loader2,
+  Search,
+  History,
+  FileCode,
+  Globe,
+  ArrowRightLeft,
+  Check,
+  ChevronDown,
+} from "lucide-react";
 
 import { trpc } from "@/utils/trpc";
-import { PROSE_CLASSES, TRANSLATION_LANGUAGES } from "@/lib/constants";
+import {
+  PROSE_CLASSES,
+  TRANSLATION_LANGUAGES,
+  LANGUAGES,
+} from "@/lib/constants";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
-import { Separator } from "@/components/ui/separator";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Spinner } from "@/components/ui/spinner";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { cn } from "@/lib/utils";
 
 const ReactMarkdown = dynamic(() => import("react-markdown"), { ssr: false });
 
 type TranslatedFile = { path: string; content: string };
 
-export default function MarkdownPage({ params }: { params: Promise<{ id: string }> }) {
+export default function MarkdownPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   const { id } = use(params);
   const queryClient = useQueryClient();
+  const [searchQuery, setSearchQuery] = useState("");
 
-  const { data: repo, isLoading } = useQuery(trpc.repository.getById.queryOptions({ id }));
+  const { data: repo, isLoading } = useQuery(
+    trpc.repository.getById.queryOptions({ id }),
+  );
 
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
   const [locale, setLocale] = useState("es");
-  const [activeTab, setActiveTab] = useState("original");
+  const [viewMode, setViewMode] = useState<"original" | "translated">(
+    "original",
+  );
 
-  const isIndexed = repo?.status === "indexed" && (repo?.chunksIndexed ?? 0) > 0;
+  const isIndexed =
+    repo?.status === "indexed" && (repo?.chunksIndexed ?? 0) > 0;
 
   const { data: mdFiles = [], isLoading: loadingFiles } = useQuery({
     queryKey: [id, "md-files"],
@@ -47,10 +93,11 @@ export default function MarkdownPage({ params }: { params: Promise<{ id: string 
     enabled: isIndexed,
   });
 
-  const {
-    data: fileContent = "",
-    isLoading: loadingContent,
-  } = useQuery({
+  const filteredFiles = mdFiles.filter((f) =>
+    f.toLowerCase().includes(searchQuery.toLowerCase()),
+  );
+
+  const { data: fileContent = "", isLoading: loadingContent } = useQuery({
     queryKey: [id, "md-content", selectedFile],
     queryFn: async () => {
       const res = await fetch("/api/markdown/content", {
@@ -59,7 +106,8 @@ export default function MarkdownPage({ params }: { params: Promise<{ id: string 
         body: JSON.stringify({ repositoryId: id, filePath: selectedFile }),
       });
       const data = (await res.json()) as { content?: string; error?: string };
-      if (!res.ok || !data.content) throw new Error(data.error ?? "Failed to load file");
+      if (!res.ok || !data.content)
+        throw new Error(data.error ?? "Failed to load file");
       return data.content;
     },
     enabled: !!selectedFile,
@@ -70,14 +118,22 @@ export default function MarkdownPage({ params }: { params: Promise<{ id: string 
       const res = await fetch("/api/markdown/translate-file", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ repositoryId: id, filePath: selectedFile, targetLocale: locale }),
+        body: JSON.stringify({
+          repositoryId: id,
+          filePath: selectedFile,
+          targetLocale: locale,
+        }),
       });
-      const data = (await res.json()) as { translated?: string; error?: string };
-      if (!res.ok || !data.translated) throw new Error(data.error ?? "Translation failed");
+      const data = (await res.json()) as {
+        translated?: string;
+        error?: string;
+      };
+      if (!res.ok || !data.translated)
+        throw new Error(data.error ?? "Translation failed");
       return data.translated;
     },
     onSuccess: () => {
-      setActiveTab("translated");
+      setViewMode("translated");
       toast.success("File translated");
     },
     onError: (error) => {
@@ -92,8 +148,12 @@ export default function MarkdownPage({ params }: { params: Promise<{ id: string 
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ repositoryId: id, targetLocale: locale }),
       });
-      const data = (await res.json()) as { files?: TranslatedFile[]; error?: string };
-      if (!res.ok || !data.files) throw new Error(data.error ?? "Batch translation failed");
+      const data = (await res.json()) as {
+        files?: TranslatedFile[];
+        error?: string;
+      };
+      if (!res.ok || !data.files)
+        throw new Error(data.error ?? "Batch translation failed");
       return data.files;
     },
     onSuccess: (files) => {
@@ -110,18 +170,21 @@ export default function MarkdownPage({ params }: { params: Promise<{ id: string 
   const handleSelectFile = (filePath: string) => {
     setSelectedFile(filePath);
     translateFileMutation.reset();
-    setActiveTab("original");
+    setViewMode("original");
   };
 
-  const handleDownloadFile = useCallback((content: string, filename: string) => {
-    const blob = new Blob([content], { type: "text/markdown" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    a.click();
-    URL.revokeObjectURL(url);
-  }, []);
+  const handleDownloadFile = useCallback(
+    (content: string, filename: string) => {
+      const blob = new Blob([content], { type: "text/markdown" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+    },
+    [],
+  );
 
   const handleDownloadZip = useCallback(
     async (files: TranslatedFile[], translationLocale: string) => {
@@ -146,230 +209,304 @@ export default function MarkdownPage({ params }: { params: Promise<{ id: string 
 
   if (isLoading) {
     return (
-      <div className="mx-auto max-w-4xl space-y-4">
-        <Skeleton className="h-6 w-48" />
-        <Skeleton className="h-4 w-32" />
-        <div className="grid grid-cols-4 gap-4">
-          <Skeleton className="col-span-1 h-64" />
-          <Skeleton className="col-span-3 h-64" />
-        </div>
+      <div className="flex h-[calc(100vh-4rem)] items-center justify-center">
+        <Loader2 className="size-6 animate-spin text-muted-foreground" />
       </div>
     );
   }
 
   if (!repo) {
-    return <p className="py-12 text-center text-sm text-muted-foreground">Repository not found</p>;
+    return (
+      <div className="flex h-[calc(100vh-4rem)] flex-col items-center justify-center gap-2">
+        <FileCode className="size-8 text-muted-foreground" />
+        <p className="text-sm text-muted-foreground">Repository not found</p>
+      </div>
+    );
   }
 
   return (
-    <div className="motion-safe:animate-in motion-safe:fade-in mx-auto max-w-4xl space-y-6">
-      <div>
-        <h1 className="text-lg font-semibold tracking-tight text-pretty">Markdown Translation</h1>
-        <p className="text-xs text-muted-foreground">
-          {repo.owner}/{repo.name}
-        </p>
-      </div>
-
-      {loadingFiles ? (
-        <div className="space-y-2">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton key={i} className="h-8 w-full" />
-          ))}
+    <div className="flex h-[calc(100vh-4rem)] w-full overflow-hidden bg-background">
+      {/* Sidebar */}
+      <div className="flex w-64 flex-col border-r bg-card/50">
+        <div className="flex h-14 items-center border-b px-4">
+          <span className="text-sm font-semibold">Files</span>
+          <Badge
+            variant="secondary"
+            className="ml-auto text-[10px] font-normal"
+          >
+            {mdFiles.length}
+          </Badge>
         </div>
-      ) : mdFiles.length === 0 ? (
-        <div className="flex items-center justify-center rounded-md border border-dashed py-16">
-          <p className="text-sm text-muted-foreground">
-            No markdown files found in this repository
-          </p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-[240px_1fr]">
-          <div className="space-y-1">
-            <p className="mb-2 text-xs font-medium tabular-nums text-muted-foreground">
-              {mdFiles.length} {mdFiles.length === 1 ? "file" : "files"}
-            </p>
-            {mdFiles.map((f) => (
-              <button
-                key={f}
-                onClick={() => handleSelectFile(f)}
-                className={`flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-xs transition-colors duration-150 ease-out cursor-pointer ${selectedFile === f ? "bg-muted text-foreground" : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"}`}
-              >
-                <FileText className="size-3 shrink-0" aria-hidden="true" />
-                <span className="min-w-0 truncate">{f}</span>
-              </button>
-            ))}
-            <Separator className="my-3" />
-            <div className="space-y-2">
-              <NativeSelect
-                value={locale}
-                onChange={(e) => setLocale(e.target.value)}
-                disabled={batchMutation.isPending}
-                className="text-xs"
-                aria-label="Target language"
-              >
-                {TRANSLATION_LANGUAGES.map((lang) => (
-                  <NativeSelectOption key={lang.code} value={lang.code}>
-                    {lang.label}
-                  </NativeSelectOption>
-                ))}
-              </NativeSelect>
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full"
-                onClick={() => batchMutation.mutate()}
-                disabled={batchMutation.isPending}
-              >
-                {batchMutation.isPending ? (
-                  <>
-                    <Spinner className="size-3" /> Translating all\u2026
-                  </>
-                ) : (
-                  <>
-                    <Languages className="size-3" aria-hidden="true" /> Translate All
-                  </>
-                )}
-              </Button>
-            </div>
+        <div className="p-3">
+          <div className="relative">
+            <Search className="absolute left-2 top-2.5 size-3.5 text-muted-foreground" />
+            <Input
+              placeholder="Search..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="h-8 pl-8 text-xs bg-background"
+            />
           </div>
-
-          <div className="min-h-96 rounded-md border">
-            {!selectedFile ? (
-              <div className="flex h-full items-center justify-center p-8">
-                <p className="text-xs text-muted-foreground">Select a file to view its content</p>
-              </div>
-            ) : loadingContent ? (
-              <div className="space-y-3 p-4">
-                <Skeleton className="h-4 w-3/4" />
-                <Skeleton className="h-4 w-1/2" />
-                <Skeleton className="h-4 w-2/3" />
-                <Skeleton className="h-4 w-1/3" />
+        </div>
+        <ScrollArea className="flex-1">
+          <div className="space-y-0.5 p-2">
+            {loadingFiles ? (
+              Array.from({ length: 5 }).map((_, i) => (
+                <Skeleton key={i} className="mb-1 h-7 w-full" />
+              ))
+            ) : filteredFiles.length === 0 ? (
+              <div className="px-2 py-8 text-center text-xs text-muted-foreground">
+                No files found
               </div>
             ) : (
-              <div>
-                <div className="flex items-center justify-between border-b px-4 py-2">
-                  <Badge variant="outline" className="font-mono text-[10px]">
-                    {selectedFile}
-                  </Badge>
-                  <div className="flex items-center gap-2">
-                    {!translatedContent ? (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => translateFileMutation.mutate()}
-                        disabled={translateFileMutation.isPending}
-                      >
-                        {translateFileMutation.isPending ? (
-                          <>
-                            <Spinner className="size-3" /> Translating\u2026
-                          </>
-                        ) : (
-                          <>
-                            <Languages className="size-3" aria-hidden="true" /> Translate
-                          </>
-                        )}
-                      </Button>
-                    ) : null}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      aria-label="Download file"
+              filteredFiles.map((f) => (
+                <button
+                  key={f}
+                  onClick={() => handleSelectFile(f)}
+                  className={cn(
+                    "flex w-full items-center gap-2 px-2 py-1.5 text-left text-xs transition-colors",
+                    selectedFile === f
+                      ? "bg-primary/10 text-primary font-medium"
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                  )}
+                >
+                  <FileText className="size-3.5 shrink-0 opacity-70" />
+                  <span className="truncate">{f}</span>
+                </button>
+              ))
+            )}
+          </div>
+        </ScrollArea>
+        <div className="border-t p-3 bg-card/80 backdrop-blur-sm">
+          <div className="space-y-3">
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
+                Target Language
+              </label>
+              <Select
+                value={locale}
+                onValueChange={(val) => val && setLocale(val)}
+              >
+                <SelectTrigger className="h-8 text-xs w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {TRANSLATION_LANGUAGES.map((lang) => (
+                    <SelectItem
+                      key={lang.code}
+                      value={lang.code}
+                      className="text-xs"
+                    >
+                      {lang.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <Button
+              className="w-full h-8 text-xs"
+              size="sm"
+              onClick={() => batchMutation.mutate()}
+              disabled={batchMutation.isPending || mdFiles.length === 0}
+            >
+              {batchMutation.isPending ? (
+                <Loader2 className="mr-2 size-3 animate-spin" />
+              ) : (
+                <Globe className="mr-2 size-3" />
+              )}
+              Translate All
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="flex flex-1 flex-col min-w-0 bg-background">
+        <header className="flex h-14 shrink-0 items-center justify-between border-b px-6">
+          <div className="flex items-center gap-4 min-w-0">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <span className="font-medium text-foreground truncate">
+                {selectedFile ?? "Select a file"}
+              </span>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            {selectedFile && (
+              <>
+                {translatedContent && (
+                  <div className="flex items-center border bg-muted/50 p-0.5">
+                    <button
+                      onClick={() => setViewMode("original")}
+                      className={cn(
+                        "px-3 py-1 text-xs font-medium transition-all",
+                        viewMode === "original"
+                          ? "bg-background shadow-sm text-foreground"
+                          : "text-muted-foreground hover:text-foreground",
+                      )}
+                    >
+                      Original
+                    </button>
+                    <button
+                      onClick={() => setViewMode("translated")}
+                      className={cn(
+                        "px-3 py-1 text-xs font-medium transition-all",
+                        viewMode === "translated"
+                          ? "bg-background shadow-sm text-foreground"
+                          : "text-muted-foreground hover:text-foreground",
+                      )}
+                    >
+                      Translated
+                    </button>
+                  </div>
+                )}
+
+                <div className="h-4 w-px bg-border mx-2" />
+
+                <DropdownMenu>
+                  <DropdownMenuTrigger
+                    className={buttonVariants({
+                      variant: "outline",
+                      size: "sm",
+                      className: "h-8 gap-2",
+                    })}
+                  >
+                    <Download className="size-3.5" />
+                    <span className="hidden sm:inline">Export</span>
+                    <ChevronDown className="size-3 opacity-50" />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48">
+                    <DropdownMenuItem
                       onClick={() => {
-                        const content =
-                          activeTab === "translated" && translatedContent
-                            ? translatedContent
-                            : fileContent;
+                        const name = selectedFile.split("/").pop() ?? "file.md";
+                        handleDownloadFile(fileContent, name);
+                      }}
+                    >
+                      Download Original
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      disabled={!translatedContent}
+                      onClick={() => {
                         const name = selectedFile.split("/").pop() ?? "file.md";
                         handleDownloadFile(
-                          content,
-                          activeTab === "translated" ? `${locale}-${name}` : name,
+                          translatedContent,
+                          `${locale}-${name}`,
                         );
                       }}
                     >
-                      <Download className="size-3" aria-hidden="true" />
-                    </Button>
-                  </div>
-                </div>
-                {translatedContent ? (
-                  <Tabs value={activeTab} onValueChange={setActiveTab}>
-                    <div className="border-b px-4">
-                      <TabsList className="bg-transparent">
-                        <TabsTrigger value="original" className="text-xs">
-                          Original
-                        </TabsTrigger>
-                        <TabsTrigger value="translated" className="text-xs">
-                          Translated ({TRANSLATION_LANGUAGES.find((l) => l.code === locale)?.label})
-                        </TabsTrigger>
-                      </TabsList>
-                    </div>
-                    <TabsContent value="original" className="mt-0">
-                      <div className={`p-4 ${PROSE_CLASSES}`}>
-                        <ReactMarkdown remarkPlugins={[remarkGfm]}>{fileContent}</ReactMarkdown>
-                      </div>
-                    </TabsContent>
-                    <TabsContent value="translated" className="mt-0">
-                      <div className={`p-4 ${PROSE_CLASSES}`}>
-                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                          {translatedContent}
-                        </ReactMarkdown>
-                      </div>
-                    </TabsContent>
-                  </Tabs>
-                ) : (
-                  <div className={`p-4 ${PROSE_CLASSES}`}>
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{fileContent}</ReactMarkdown>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+                      Download Translated
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
 
-      {repo.markdownTranslations.length > 0 ? (
-        <>
-          <Separator />
-          <section>
-            <h2 className="mb-3 text-sm font-semibold">Previous Translations</h2>
-            <div className="space-y-2">
-              {(
-                repo.markdownTranslations as unknown as Array<{
-                  id: string;
-                  locale: string;
-                  files: unknown;
-                  createdAt: string;
-                }>
-              ).map((t) => {
-                const files = t.files as TranslatedFile[];
-                return (
-                  <div
-                    key={t.id}
-                    className="flex items-center justify-between rounded-md border px-4 py-3 transition-colors duration-150 ease-out hover:bg-muted/30"
+                {!translatedContent && (
+                  <Button
+                    size="sm"
+                    className="h-8 gap-2"
+                    onClick={() => translateFileMutation.mutate()}
+                    disabled={translateFileMutation.isPending}
                   >
-                    <div className="flex items-center gap-2">
-                      <Badge variant="outline" className="text-[10px]">
-                        {t.locale}
-                      </Badge>
-                      <span className="text-xs tabular-nums text-muted-foreground">
-                        {files.length} {files.length === 1 ? "file" : "files"} &middot;{" "}
-                        {new Date(t.createdAt).toLocaleDateString()}
-                      </span>
+                    {translateFileMutation.isPending ? (
+                      <Loader2 className="size-3.5 animate-spin" />
+                    ) : (
+                      <ArrowRightLeft className="size-3.5" />
+                    )}
+                    Translate
+                  </Button>
+                )}
+              </>
+            )}
+
+            <Sheet>
+              <SheetTrigger
+                className={buttonVariants({
+                  variant: "ghost",
+                  size: "icon",
+                  className: "h-8 w-8 ml-2",
+                })}
+              >
+                <History className="size-4 text-muted-foreground" />
+              </SheetTrigger>
+              <SheetContent>
+                <SheetHeader>
+                  <SheetTitle>Translation History</SheetTitle>
+                  <SheetDescription>
+                    Access previous batch translations.
+                  </SheetDescription>
+                </SheetHeader>
+                <div className="mt-6 space-y-4">
+                  {repo.markdownTranslations.length === 0 ? (
+                    <div className="text-center py-8 text-sm text-muted-foreground">
+                      No history available
                     </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleDownloadZip(files, t.locale)}
-                    >
-                      <Download className="size-3" aria-hidden="true" />
-                      Download
-                    </Button>
-                  </div>
-                );
-              })}
+                  ) : (
+                    (repo.markdownTranslations as any[]).map((t) => (
+                      <div
+                        key={t.id}
+                        className="flex flex-col gap-3 border p-4 text-sm hover:bg-muted/50 transition-colors"
+                      >
+                        <div className="flex items-center justify-between">
+                          <Badge variant="outline" className="font-normal">
+                            {LANGUAGES.find((l) => l.code === t.locale)
+                              ?.label ?? t.locale}
+                          </Badge>
+                          <span className="text-xs text-muted-foreground">
+                            {new Date(t.createdAt).toLocaleDateString()}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between pt-2 border-t">
+                          <span className="text-xs text-muted-foreground">
+                            {(t.files as any[]).length} files
+                          </span>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 px-2 -mr-2"
+                            onClick={() =>
+                              handleDownloadZip(t.files as any[], t.locale)
+                            }
+                          >
+                            <Download className="mr-2 size-3" />
+                            ZIP
+                          </Button>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </SheetContent>
+            </Sheet>
+          </div>
+        </header>
+
+        <div className="flex-1 overflow-hidden">
+          {!selectedFile ? (
+            <div className="flex h-full flex-col items-center justify-center gap-3 text-muted-foreground">
+              <div className="bg-muted p-4 border border-border">
+                <FileText className="size-8 opacity-60" />
+              </div>
+              <p className="text-sm font-medium">
+                Select a file to view content
+              </p>
             </div>
-          </section>
-        </>
-      ) : null}
+          ) : loadingContent ? (
+            <div className="flex h-full items-center justify-center">
+              <Loader2 className="size-8 animate-spin text-muted-foreground/50" />
+            </div>
+          ) : (
+            <ScrollArea className="h-full">
+              <div className="mx-auto max-w-3xl px-8 py-10">
+                <article className={PROSE_CLASSES}>
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    {viewMode === "translated" && translatedContent
+                      ? translatedContent
+                      : fileContent}
+                  </ReactMarkdown>
+                </article>
+              </div>
+            </ScrollArea>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
