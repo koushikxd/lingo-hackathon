@@ -1,72 +1,87 @@
 # lingo-dev
 
-This project was created with [Better-T-Stack](https://github.com/AmanVarshney01/create-better-t-stack), a modern TypeScript stack that combines Next.js, Self, TRPC, and more.
+Lingo-dev helps you understand and localize GitHub repositories faster.
 
-## Features
+You connect your GitHub account, index a repository into a vector database, generate AI onboarding docs for that repo, and translate markdown files into other languages.
 
-- **TypeScript** - For type safety and improved developer experience
-- **Next.js** - Full-stack React framework
-- **TailwindCSS** - Utility-first CSS for rapid UI development
-- **shadcn/ui** - Reusable UI components
-- **tRPC** - End-to-end type-safe APIs
-- **Prisma** - TypeScript-first ORM
-- **PostgreSQL** - Database engine
-- **Authentication** - Better-Auth
-- **Oxlint** - Oxlint + Oxfmt (linting & formatting)
-- **Turborepo** - Optimized monorepo build system
+## What the app does
 
-## Getting Started
+- Auth with GitHub
+- Import and index public/private GitHub repositories
+- Generate AI onboarding documentation from indexed code
+- Save onboarding docs in multiple locales
+- Translate markdown files using lingo.dev
+- Manage indexed repositories and related generated content
 
-First, install the dependencies:
+## Tech stack
+
+- Next.js (App Router) + React 19
+- tRPC + TanStack Query
+- Better Auth
+- Prisma + PostgreSQL
+- Qdrant (vector store)
+- OpenAI (embeddings/content generation)
+- Tailwind CSS + shadcn/ui
+- Turborepo + PNPM workspaces
+
+## Monorepo structure
+
+```text
+apps/web         Next.js app (UI + route handlers)
+packages/api     tRPC routers + indexing/retrieval logic
+packages/auth    Better Auth setup
+packages/db      Prisma schema + Docker services
+packages/env     Shared runtime env validation
+packages/config  Shared TypeScript config
+```
+
+## Prerequisites
+
+- Node.js
+- PNPM
+- Docker (for local PostgreSQL and Qdrant)
+- GitHub OAuth app credentials
+- OpenAI API key
+- lingo.dev API key
+
+## Environment variables
+
+Set these before running the app:
+
+- `DATABASE_URL`
+- `BETTER_AUTH_SECRET`
+- `BETTER_AUTH_URL`
+- `CORS_ORIGIN`
+- `QDRANT_URL`
+- `QDRANT_API_KEY`
+- `OPENAI_API_KEY`
+- `GITHUB_CLIENT_ID`
+- `GITHUB_CLIENT_SECRET`
+- `GITHUB_TOKEN` (optional)
+- `LINGODOTDEV_API_KEY`
+- `NODE_ENV`
+
+## Local setup
 
 ```bash
 pnpm install
+pnpm db:start
+pnpm db:push
+pnpm dev
 ```
 
-## Database Setup
+App runs at `http://localhost:3000`.
 
-This project uses PostgreSQL with Prisma.
+## Useful commands
 
-1. Make sure you have a PostgreSQL database set up.
-2. Update your `apps/web/.env` file with your PostgreSQL connection details.
-
-3. Apply the schema to your database:
-
-```bash
-pnpm run db:push
-```
-
-Then, run the development server:
-
-```bash
-pnpm run dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) in your browser to see the fullstack application.
-
-## Git Hooks and Formatting
-
-- Format and lint fix: `pnpm run check`
-
-## Project Structure
-
-```
-lingo-dev/
-├── apps/
-│   └── web/         # Fullstack application (Next.js)
-├── packages/
-│   ├── api/         # API layer / business logic
-│   ├── auth/        # Authentication configuration & logic
-│   └── db/          # Database schema & queries
-```
-
-## Available Scripts
-
-- `pnpm run dev`: Start all applications in development mode
-- `pnpm run build`: Build all applications
-- `pnpm run check-types`: Check TypeScript types across all apps
-- `pnpm run db:push`: Push schema changes to database
-- `pnpm run db:generate`: Generate database client/types
-- `pnpm run db:migrate`: Run database migrations
-- `pnpm run db:studio`: Open database studio UI
-- `pnpm run check`: Run Oxlint and Oxfmt
+- `pnpm dev` - run all dev tasks
+- `pnpm dev:web` - run only the web app
+- `pnpm build` - build all packages/apps
+- `pnpm check-types` - run TypeScript checks
+- `pnpm check` - run oxlint + oxfmt
+- `pnpm db:start` - start PostgreSQL + Qdrant via Docker
+- `pnpm db:stop` - stop DB containers
+- `pnpm db:down` - stop and remove DB containers
+- `pnpm db:generate` - regenerate Prisma client
+- `pnpm db:migrate` - run Prisma migrations
+- `pnpm db:studio` - open Prisma Studio
