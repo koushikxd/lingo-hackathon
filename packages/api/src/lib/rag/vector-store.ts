@@ -1,4 +1,4 @@
-import { nanoid } from "nanoid";
+import { randomUUID } from "node:crypto";
 
 import { getQdrantClient } from "../vector/qdrant";
 import type { CodeChunkType } from "./chunker";
@@ -46,10 +46,14 @@ export type VectorSearchResult = {
 async function collectionExists(collectionName: string) {
   const client = getQdrantClient();
   const collections = await client.getCollections();
-  return collections.collections.some((collection) => collection.name === collectionName);
+  return collections.collections.some(
+    (collection) => collection.name === collectionName,
+  );
 }
 
-export async function ensureCollection(collectionName = DEFAULT_COLLECTION_NAME) {
+export async function ensureCollection(
+  collectionName = DEFAULT_COLLECTION_NAME,
+) {
   const client = getQdrantClient();
   const exists = await collectionExists(collectionName);
 
@@ -92,7 +96,7 @@ export async function upsertVectors(
   await ensureCollection(collectionName);
   const client = getQdrantClient();
   const normalized = points.map((point) => ({
-    id: point.id ?? nanoid(),
+    id: point.id ?? randomUUID(),
     vector: point.vector,
     payload: point.payload,
   }));
@@ -105,7 +109,9 @@ export async function upsertVectors(
   return normalized.map((point) => point.id);
 }
 
-export async function searchVectors(input: SearchInput): Promise<VectorSearchResult[]> {
+export async function searchVectors(
+  input: SearchInput,
+): Promise<VectorSearchResult[]> {
   const {
     collectionName = DEFAULT_COLLECTION_NAME,
     embedding,
@@ -146,7 +152,12 @@ export async function searchVectors(input: SearchInput): Promise<VectorSearchRes
   });
 
   return results
-    .filter((item) => typeof item.id === "string" && item.payload && typeof item.score === "number")
+    .filter(
+      (item) =>
+        typeof item.id === "string" &&
+        item.payload &&
+        typeof item.score === "number",
+    )
     .map((item) => ({
       id: item.id as string,
       score: item.score,
@@ -154,7 +165,10 @@ export async function searchVectors(input: SearchInput): Promise<VectorSearchRes
     }));
 }
 
-export async function deleteVectors(vectorIds: string[], collectionName = DEFAULT_COLLECTION_NAME) {
+export async function deleteVectors(
+  vectorIds: string[],
+  collectionName = DEFAULT_COLLECTION_NAME,
+) {
   if (vectorIds.length === 0) {
     return;
   }
