@@ -44,7 +44,7 @@ export default function RepoDetailPage({
   }
 
   return (
-    <div className="motion-safe:animate-in motion-safe:fade-in mx-auto max-w-2xl space-y-6">
+    <div className="motion-safe:animate-in motion-safe:fade-in mx-auto max-w-2xl space-y-6 pt-6">
       <div>
         <h1 className="text-lg font-semibold tracking-tight text-pretty">
           {repo.owner}/{repo.name}

@@ -64,7 +64,7 @@ export default function DashboardPage() {
 
   return (
     <div className="motion-safe:animate-in motion-safe:fade-in mx-auto max-w-2xl space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between pt-6">
         <div>
           <h1 className="text-lg font-semibold tracking-tight text-pretty">
             Repositories

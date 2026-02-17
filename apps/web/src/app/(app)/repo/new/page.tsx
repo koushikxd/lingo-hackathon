@@ -38,8 +38,8 @@ const PAGE_SIZE = 10;
 
 function IndexingProgress({ label, step }: { label: string; step: number }) {
   return (
-    <div className="mx-auto max-w-lg">
-      <div className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2 flex flex-col items-center justify-center gap-6 py-20">
+    <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center">
+      <div className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2 flex flex-col items-center justify-center gap-6">
         <Spinner className="size-6" />
         <div className="text-center">
           <p className="text-sm font-medium">{label}</p>
@@ -182,7 +182,7 @@ export default function NewRepoPage() {
   }
 
   return (
-    <div className="motion-safe:animate-in motion-safe:fade-in mx-auto max-w-2xl space-y-6">
+    <div className="motion-safe:animate-in motion-safe:fade-in mx-auto max-w-2xl space-y-6 pt-6">
       <div>
         <h1 className="text-lg font-semibold tracking-tight text-pretty">
           Index Repository
