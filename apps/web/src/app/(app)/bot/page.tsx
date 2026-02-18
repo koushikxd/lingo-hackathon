@@ -2,7 +2,16 @@
 
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Bot, Building2, ExternalLink, Globe, Languages, Tags, User } from "lucide-react";
+import {
+  Bot,
+  Building2,
+  ExternalLink,
+  Languages,
+  Sparkles,
+  Tags,
+  User,
+  Zap,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import { trpc } from "@/utils/trpc";
@@ -57,99 +66,188 @@ export default function BotDashboardPage() {
     }),
   );
 
+  const installCount = installations?.length ?? 0;
+
   return (
-    <div className="motion-safe:animate-in motion-safe:fade-in mx-auto max-w-2xl space-y-6">
-      <div className="flex items-center justify-between pt-6">
-        <div>
-          <h1 className="text-lg font-semibold tracking-tight text-pretty">Bot Management</h1>
-          <p className="text-xs text-muted-foreground">
-            Manage lingo-bolt installations and settings
-          </p>
+    <div className="motion-safe:animate-in motion-safe:fade-in mx-auto max-w-2xl space-y-6 pt-6 pb-10">
+      <div>
+        <h1 className="text-lg font-semibold tracking-tight text-pretty">lingo-bolt</h1>
+        <p className="mt-1 text-xs text-muted-foreground">
+          GitHub App for translation, summarization, and auto-labeling
+        </p>
+        <div className="mt-3 flex items-center gap-3">
+          <Badge variant="outline" className="text-[10px]">
+            GitHub App
+          </Badge>
+          {!isLoading && (
+            <span className="text-xs text-muted-foreground tabular-nums">
+              {installCount} installation{installCount === 1 ? "" : "s"}
+            </span>
+          )}
         </div>
-        <a href={GITHUB_APP_INSTALL_URL} target="_blank" rel="noopener noreferrer">
-          <Button size="sm">
-            <ExternalLink className="size-3.5" aria-hidden="true" />
-            Install Bot
-          </Button>
-        </a>
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div className="flex flex-col justify-between border border-neutral-700 bg-neutral-900 p-4">
+          <div>
+            <div className="flex items-center gap-2 text-sm font-medium">
+              <Bot className="size-4" aria-hidden="true" />
+              Installations
+            </div>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Manage per-account settings and defaults
+            </p>
+          </div>
+          <div className="mt-4 flex items-center justify-between">
+            <span className="text-xs tabular-nums text-muted-foreground">
+              {isLoading ? (
+                <Skeleton className="h-3 w-20" />
+              ) : installCount > 0 ? (
+                `${installCount} active`
+              ) : (
+                "Not installed"
+              )}
+            </span>
+            <a href={GITHUB_APP_INSTALL_URL} target="_blank" rel="noopener noreferrer">
+              <Button size="sm" variant="outline" className="h-6 gap-1 px-2 text-[10px]">
+                <ExternalLink className="size-3" aria-hidden="true" />
+                Add to GitHub
+              </Button>
+            </a>
+          </div>
+        </div>
+
+        <div className="flex flex-col justify-between border border-neutral-700 bg-neutral-900 p-4">
+          <div>
+            <div className="flex items-center gap-2 text-sm font-medium">
+              <Languages className="size-4" aria-hidden="true" />
+              Commands
+            </div>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Mention the bot in any issue or pull request
+            </p>
+          </div>
+          <div className="mt-4 space-y-1">
+            <code className="block text-[10px] font-mono text-muted-foreground">
+              @lingo-bolt translate to spanish
+            </code>
+            <code className="block text-[10px] font-mono text-muted-foreground">
+              @lingo-bolt summarize in french
+            </code>
+          </div>
+        </div>
       </div>
 
       {isLoading ? (
-        <div className="space-y-3">
-          {Array.from({ length: 2 }).map((_, i) => (
-            <div key={i} className="border border-border bg-card p-5">
-              <div className="space-y-3">
-                <Skeleton className="h-4 w-48" />
-                <Skeleton className="h-3 w-64" />
-                <Skeleton className="h-8 w-32" />
+        <section>
+          <h2 className="mb-3 text-sm font-semibold">Installations</h2>
+          <div className="space-y-2">
+            {Array.from({ length: 2 }).map((_, i) => (
+              <div key={i} className="border border-neutral-700 bg-neutral-900 p-4 space-y-3">
+                <Skeleton className="h-4 w-40" />
+                <Skeleton className="h-3 w-56" />
+                <Skeleton className="h-7 w-28" />
               </div>
-            </div>
-          ))}
-        </div>
-      ) : !installations || installations.length === 0 ? (
-        <div className="flex flex-col items-center justify-center gap-4 border border-dashed border-border py-16">
-          <Bot className="size-8 text-muted-foreground" aria-hidden="true" />
-          <div className="text-center">
-            <p className="text-sm text-muted-foreground">No bot installations found</p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Install lingo-bolt on your GitHub repositories to get started
+            ))}
+          </div>
+        </section>
+      ) : installCount === 0 ? (
+        <div className="flex flex-col items-center justify-center gap-3 border border-dashed border-border py-16 text-center">
+          <Bot className="size-6 text-muted-foreground" aria-hidden="true" />
+          <div className="space-y-1">
+            <p className="text-sm font-medium">No installations yet</p>
+            <p className="text-xs text-muted-foreground">
+              Install lingo-bolt on your GitHub account or organization to get started
             </p>
           </div>
           <a href={GITHUB_APP_INSTALL_URL} target="_blank" rel="noopener noreferrer">
-            <Button size="sm">
+            <Button size="sm" variant="outline" className="mt-1">
               <ExternalLink className="size-3.5" aria-hidden="true" />
-              Install Bot
+              Add to GitHub
             </Button>
           </a>
         </div>
       ) : (
-        <div className="space-y-4">
-          {installations.map((inst) => (
-            <InstallationCard
-              key={inst.id}
-              installation={inst}
-              onUpdate={(data) => updateMutation.mutate({ id: inst.id, ...data })}
-              isPending={updateMutation.isPending}
-            />
-          ))}
-        </div>
+        <section>
+          <h2 className="mb-3 text-sm font-semibold">Installations</h2>
+          <div className="space-y-1.5">
+            {installations!.map((inst) => (
+              <InstallationCard
+                key={inst.id}
+                installation={inst}
+                onUpdate={(data) => updateMutation.mutate({ id: inst.id, ...data })}
+                isPending={updateMutation.isPending}
+              />
+            ))}
+          </div>
+        </section>
       )}
 
-      <div className="border border-border bg-card p-5">
-        <h2 className="text-sm font-medium mb-3">Available Commands</h2>
-        <div className="space-y-2 text-xs text-muted-foreground">
-          <div className="flex items-start gap-2">
-            <Languages className="size-3.5 mt-0.5 shrink-0" aria-hidden="true" />
-            <div>
-              <code className="text-foreground">@lingo-bolt translate to spanish</code>
-              <span className="ml-1">— Translates the issue/PR content</span>
+      <section>
+        <h2 className="mb-3 text-sm font-semibold">Reference</h2>
+        <div className="space-y-1.5">
+          <div className="border border-neutral-700 bg-neutral-900 px-4 py-3">
+            <div className="flex items-center gap-2 mb-2">
+              <Zap className="size-3.5 text-muted-foreground" aria-hidden="true" />
+              <span className="text-xs font-medium">Mention commands</span>
+            </div>
+            <div className="space-y-2 pl-5">
+              <ReferenceRow
+                command="@lingo-bolt translate to spanish"
+                description="Translate the issue or PR body"
+              />
+              <ReferenceRow
+                command="@lingo-bolt summarize"
+                description="Summarize in your default language"
+              />
+              <ReferenceRow
+                command="@lingo-bolt summarize in french"
+                description="Summarize in a specific language"
+              />
             </div>
           </div>
-          <div className="flex items-start gap-2">
-            <Globe className="size-3.5 mt-0.5 shrink-0" aria-hidden="true" />
-            <div>
-              <code className="text-foreground">@lingo-bolt summarize</code>
-              <span className="ml-1">— Summarizes in the default language</span>
+
+          <div className="border border-neutral-700 bg-neutral-900 px-4 py-3">
+            <div className="flex items-center gap-2 mb-2">
+              <Sparkles className="size-3.5 text-muted-foreground" aria-hidden="true" />
+              <span className="text-xs font-medium">Automatic features</span>
             </div>
-          </div>
-          <div className="flex items-start gap-2">
-            <Globe className="size-3.5 mt-0.5 shrink-0" aria-hidden="true" />
-            <div>
-              <code className="text-foreground">@lingo-bolt summarize in french</code>
-              <span className="ml-1">— Summarizes in a specific language</span>
-            </div>
-          </div>
-          <div className="flex items-start gap-2">
-            <Tags className="size-3.5 mt-0.5 shrink-0" aria-hidden="true" />
-            <div>
-              <span className="text-foreground">Auto-labeling</span>
-              <span className="ml-1">
-                — Detects language and adds labels like <code>lang:chinese</code>
-              </span>
+            <div className="space-y-2 pl-5">
+              <div className="flex items-start gap-3">
+                <Tags className="size-3 mt-0.5 shrink-0 text-muted-foreground" aria-hidden="true" />
+                <div>
+                  <span className="text-xs text-foreground">Auto-labeling</span>
+                  <span className="text-xs text-muted-foreground ml-1.5">
+                    — adds{" "}
+                    <code className="rounded bg-muted px-1 py-0.5 font-mono text-[10px]">
+                      lang:chinese
+                    </code>{" "}
+                    labels on new issues
+                  </span>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <Languages className="size-3 mt-0.5 shrink-0 text-muted-foreground" aria-hidden="true" />
+                <div>
+                  <span className="text-xs text-foreground">Auto-translate</span>
+                  <span className="text-xs text-muted-foreground ml-1.5">
+                    — translates new issues to your default language
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      </section>
+    </div>
+  );
+}
+
+function ReferenceRow({ command, description }: { command: string; description: string }) {
+  return (
+    <div className="flex items-center gap-3">
+      <code className="shrink-0 font-mono text-[10px] text-foreground">{command}</code>
+      <span className="text-[10px] text-muted-foreground">— {description}</span>
     </div>
   );
 }
@@ -178,83 +276,100 @@ function InstallationCard({
   isPending: boolean;
 }) {
   const [language, setLanguage] = useState(installation.defaultLanguage);
+  const [open, setOpen] = useState(false);
 
   return (
-    <div className="border border-neutral-700 bg-neutral-900 p-5 space-y-4">
-      <div className="flex items-center justify-between">
+    <div className="border border-neutral-700 bg-neutral-900">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="flex w-full items-center justify-between px-4 py-3 text-left transition-colors duration-150 ease-out hover:bg-muted/30"
+      >
         <div className="flex items-center gap-2">
           {installation.accountType === "Organization" ? (
-            <Building2 className="size-4 text-muted-foreground" aria-hidden="true" />
+            <Building2 className="size-3.5 text-muted-foreground" aria-hidden="true" />
           ) : (
-            <User className="size-4 text-muted-foreground" aria-hidden="true" />
+            <User className="size-3.5 text-muted-foreground" aria-hidden="true" />
           )}
           <span className="text-sm font-medium">{installation.accountLogin}</span>
           <Badge variant="outline" className="text-[10px]">
             {installation.accountType}
           </Badge>
         </div>
-      </div>
+        <span className="text-xs text-muted-foreground">{open ? "Close" : "Settings"}</span>
+      </button>
 
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <Label htmlFor={`lang-${installation.id}`} className="text-xs">
-            Default Language
-          </Label>
-          <Select
-            value={language}
-            onValueChange={(val) => {
-              if (!val) return;
-              setLanguage(val);
-              onUpdate({ defaultLanguage: val });
-            }}
-          >
-            <SelectTrigger id={`lang-${installation.id}`}>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {LANGUAGES.map((lang) => (
-                <SelectItem key={lang.value} value={lang.value}>
-                  {lang.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="flex items-center justify-between">
-          <div>
-            <Label htmlFor={`auto-translate-${installation.id}`} className="text-xs">
-              Auto-translate
+      {open && (
+        <div className="divide-y divide-neutral-700 border-t border-neutral-700 px-4">
+          <div className="flex items-center justify-between py-3">
+            <Label
+              htmlFor={`lang-${installation.id}`}
+              className="text-xs font-normal text-muted-foreground"
+            >
+              Default language
             </Label>
-            <p className="text-[10px] text-muted-foreground">
-              Translate new issues and comments to your default language
-            </p>
+            <Select
+              value={language}
+              onValueChange={(val) => {
+                if (!val) return;
+                setLanguage(val);
+                onUpdate({ defaultLanguage: val });
+              }}
+            >
+              <SelectTrigger id={`lang-${installation.id}`} className="h-7 w-36 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {LANGUAGES.map((lang) => (
+                  <SelectItem key={lang.value} value={lang.value} className="text-xs">
+                    {lang.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
-          <Switch
-            id={`auto-translate-${installation.id}`}
-            checked={installation.autoTranslate}
-            onCheckedChange={(checked) => onUpdate({ autoTranslate: !!checked })}
-            disabled={isPending}
-          />
-        </div>
 
-        <div className="flex items-center justify-between">
-          <div>
-            <Label htmlFor={`auto-label-${installation.id}`} className="text-xs">
-              Auto-label
-            </Label>
-            <p className="text-[10px] text-muted-foreground">
-              Detect language and add labels to new issues
-            </p>
+          <div className="flex items-center justify-between py-3">
+            <div>
+              <Label
+                htmlFor={`auto-translate-${installation.id}`}
+                className="text-xs font-normal"
+              >
+                Auto-translate
+              </Label>
+              <p className="text-[10px] text-muted-foreground">
+                New issues and comments translated automatically
+              </p>
+            </div>
+            <Switch
+              id={`auto-translate-${installation.id}`}
+              checked={installation.autoTranslate}
+              onCheckedChange={(checked) => onUpdate({ autoTranslate: !!checked })}
+              disabled={isPending}
+            />
           </div>
-          <Switch
-            id={`auto-label-${installation.id}`}
-            checked={installation.autoLabel}
-            onCheckedChange={(checked) => onUpdate({ autoLabel: !!checked })}
-            disabled={isPending}
-          />
+
+          <div className="flex items-center justify-between py-3">
+            <div>
+              <Label
+                htmlFor={`auto-label-${installation.id}`}
+                className="text-xs font-normal"
+              >
+                Auto-label
+              </Label>
+              <p className="text-[10px] text-muted-foreground">
+                Detect language and add labels to new issues
+              </p>
+            </div>
+            <Switch
+              id={`auto-label-${installation.id}`}
+              checked={installation.autoLabel}
+              onCheckedChange={(checked) => onUpdate({ autoLabel: !!checked })}
+              disabled={isPending}
+            />
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

@@ -1,6 +1,6 @@
-# lingo-dev
+# lingo bolt
 
-Lingo-dev helps you understand and localize GitHub repositories faster.
+Lingo bolt helps you understand and localize GitHub repositories faster.
 
 You connect your GitHub account, index a repository into a vector database, generate AI onboarding docs for that repo, and translate markdown files into other languages.
 
@@ -10,7 +10,7 @@ You connect your GitHub account, index a repository into a vector database, gene
 - Import and index public/private GitHub repositories
 - Generate AI onboarding documentation from indexed code
 - Save onboarding docs in multiple locales
-- Translate markdown files using lingo.dev
+- Translate markdown files
 - Manage indexed repositories and related generated content
 - GitHub bot (lingo-bolt) for in-repo translation, summarization, and auto-labeling
 

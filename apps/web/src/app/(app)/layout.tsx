@@ -53,7 +53,7 @@ function buildBreadcrumbs(
   if (pathname === "/") return crumbs;
 
   if (pathname === "/bot") {
-    return [{ label: "Bot Management" }];
+    return [{ label: "lingo-bolt" }];
   }
 
   if (pathname === "/repo/new") {
@@ -104,7 +104,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 <div className="bg-primary text-primary-foreground flex size-6 items-center justify-center">
                   <Globe className="size-3.5" aria-hidden="true" />
                 </div>
-                <span className="text-sm font-semibold tracking-tight">lingo-dev</span>
+                <span className="text-sm font-semibold tracking-tight">lingo bolt</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>
@@ -154,7 +154,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                     render={<Link href={"/bot" as never} />}
                   >
                     <Bot className="size-3.5" aria-hidden="true" />
-                    <span>Manage Bot</span>
+                    <span>lingo-bolt</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               </SidebarMenu>
