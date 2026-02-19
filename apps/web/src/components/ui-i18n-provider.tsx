@@ -7,7 +7,12 @@ import { Globe, Loader2 } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 import { LANGUAGES } from "@/lib/constants";
 import { UI_MESSAGES_EN, type UiMessageKey } from "@/lib/ui-messages";
-import { formatUiMessage, resolveUiMessage, type UiMessageVars, type UiMessages } from "@/lib/ui-i18n";
+import {
+  formatUiMessage,
+  resolveUiMessage,
+  type UiMessageVars,
+  type UiMessages,
+} from "@/lib/ui-i18n";
 import { trpc } from "@/utils/trpc";
 
 type UiI18nContextValue = {
@@ -33,16 +38,23 @@ function TranslationIndicator({ locale }: { locale: string }) {
   if (!visible) return null;
 
   return (
-    <div className="fixed top-3 right-3 z-[9999] flex items-center gap-2 border border-neutral-700 bg-neutral-900/95 px-3 py-1.5 shadow-lg backdrop-blur-sm animate-in fade-in slide-in-from-top-2 duration-300">
+    <div className="fixed top-3 right-3 z-9999 flex items-center gap-2 border border-neutral-700 bg-neutral-900/95 px-3 py-1.5 shadow-lg backdrop-blur-sm animate-in fade-in slide-in-from-top-2 duration-300">
       <Loader2 className="size-3 animate-spin text-primary" />
       <span className="text-[11px] text-muted-foreground">
-        Translating to <span className="font-medium text-foreground">{label}</span>…
+        Translating to{" "}
+        <span className="font-medium text-foreground">{label}</span>…
       </span>
     </div>
   );
 }
 
-function TranslationDone({ locale, onDone }: { locale: string; onDone: () => void }) {
+function TranslationDone({
+  locale,
+  onDone,
+}: {
+  locale: string;
+  onDone: () => void;
+}) {
   const label = LANGUAGES.find((l) => l.code === locale)?.label ?? locale;
 
   useEffect(() => {
@@ -51,7 +63,7 @@ function TranslationDone({ locale, onDone }: { locale: string; onDone: () => voi
   }, [onDone]);
 
   return (
-    <div className="fixed top-3 right-3 z-[9999] flex items-center gap-2 border border-neutral-700 bg-neutral-900/95 px-3 py-1.5 shadow-lg backdrop-blur-sm animate-in fade-in slide-in-from-top-2 duration-300">
+    <div className="fixed top-3 right-3 z-9999 flex items-center gap-2 border border-neutral-700 bg-neutral-900/95 px-3 py-1.5 shadow-lg backdrop-blur-sm animate-in fade-in slide-in-from-top-2 duration-300">
       <Globe className="size-3 text-primary" />
       <span className="text-[11px] text-muted-foreground">
         Switched to <span className="font-medium text-foreground">{label}</span>
@@ -71,7 +83,9 @@ export function UiI18nProvider({ children }: { children: React.ReactNode }) {
 
   const locale = prefs?.preferredLanguage ?? "en";
 
-  const { data: translatedMessages, isFetching } = useQuery<Partial<UiMessages>>({
+  const { data: translatedMessages, isFetching } = useQuery<
+    Partial<UiMessages>
+  >({
     queryKey: ["ui-messages", locale],
     enabled: isAuthenticated && locale !== "en",
     queryFn: async () => {
@@ -81,7 +95,9 @@ export function UiI18nProvider({ children }: { children: React.ReactNode }) {
         credentials: "include",
         body: JSON.stringify({ targetLocale: locale }),
       });
-      const data = (await response.json()) as { messages?: Partial<UiMessages> };
+      const data = (await response.json()) as {
+        messages?: Partial<UiMessages>;
+      };
       if (!response.ok || !data.messages) {
         throw new Error("Failed to load localized UI messages");
       }
@@ -102,7 +118,10 @@ export function UiI18nProvider({ children }: { children: React.ReactNode }) {
     }
   }, [justFinished, locale]);
 
-  const messages = locale === "en" ? UI_MESSAGES_EN : { ...UI_MESSAGES_EN, ...translatedMessages };
+  const messages =
+    locale === "en"
+      ? UI_MESSAGES_EN
+      : { ...UI_MESSAGES_EN, ...translatedMessages };
 
   const value = useMemo<UiI18nContextValue>(
     () => ({
@@ -121,7 +140,10 @@ export function UiI18nProvider({ children }: { children: React.ReactNode }) {
       {children}
       {isTranslating && <TranslationIndicator locale={locale} />}
       {!isTranslating && showDone && (
-        <TranslationDone locale={doneLocale} onDone={() => setShowDone(false)} />
+        <TranslationDone
+          locale={doneLocale}
+          onDone={() => setShowDone(false)}
+        />
       )}
     </UiI18nContext.Provider>
   );
