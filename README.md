@@ -6,20 +6,21 @@ Connect your GitHub repos, get AI onboarding docs in any language, translate mar
 
 ## Demo
 
-> **[Watch the full demo on YouTube →](https://youtu.be/DQ8-F-Au6R4)**
+> **[Watch the full demo on YouTube →](https://youtu.be/OlGq3AAdZ08)**
 
-[![Demo video](https://img.youtube.com/vi/DQ8-F-Au6R4/maxresdefault.jpg)](https://youtu.be/DQ8-F-Au6R4)
+[![Demo video](https://img.youtube.com/vi/OlGq3AAdZ08/maxresdefault.jpg)](https://youtu.be/OlGq3AAdZ08)
 
 **[Blog Post](https://dev.to/koushikxd/lingo-bolt-removing-the-language-barrier-from-opensource-4a48)** · **[Reddit Post](https://www.reddit.com/r/lingodotdev/comments/1raqdr9/built_lingo_bolt_a_github_bot_plus_web_app_that/)**
 
 ## Features
 
+- **GitHub bot** — install lingo-bolt on your org, and it auto-translates issues, summarizes threads, and labels by language
 - **GitHub auth** — sign in with GitHub, import public or private repos
 - **Repo indexing** — indexes your codebase into a vector store for semantic search
 - **AI onboarding docs** — generate contributor-ready docs from your codebase in any selected language
 - **Markdown translation** — translate any markdown file in a repo, download as individual files or a ZIP
 - **AI chat** — ask questions about the repo, browse issues and PRs, find relevant code — all in your language
-- **GitHub bot** — install lingo-bolt on your org, and it auto-translates issues, summarizes threads, and labels by language
+- **Site-wide UI translation** — the entire app interface translates to your preferred language automatically
 - **MCP server** — use Lingo Bolt tools directly inside your IDE (Cursor, VS Code, etc.) to browse issues, translate docs, and summarize in your language
 
 ## lingo-bolt bot
@@ -59,14 +60,14 @@ Runs as a remote HTTP server inside the web app — no separate build step, no e
 
 ### Tools
 
-| Tool | What it does |
-| --- | --- |
-| `list_issues` | List issues with titles translated to your language |
-| `get_issue` | Fetch a full issue with comments, translated |
-| `translate_doc` | Translate any file (README, CONTRIBUTING, etc.) |
-| `translate_text` | Translate arbitrary text between languages |
-| `search_codebase` | Semantic search across an indexed repo's code |
-| `get_onboarding` | Fetch AI-generated onboarding docs for a repo |
+| Tool              | What it does                                        |
+| ----------------- | --------------------------------------------------- |
+| `list_issues`     | List issues with titles translated to your language |
+| `get_issue`       | Fetch a full issue with comments, translated        |
+| `translate_doc`   | Translate any file (README, CONTRIBUTING, etc.)     |
+| `translate_text`  | Translate arbitrary text between languages          |
+| `search_codebase` | Semantic search across an indexed repo's code       |
+| `get_onboarding`  | Fetch AI-generated onboarding docs for a repo       |
 
 ### Try these prompts in your IDE
 
