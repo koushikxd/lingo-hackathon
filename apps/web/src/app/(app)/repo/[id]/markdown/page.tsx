@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useCallback, useState } from "react";
+import { use, useCallback, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import remarkGfm from "remark-gfm";
@@ -98,8 +98,10 @@ export default function MarkdownPage({
     enabled: isIndexed,
   });
 
-  const filteredFiles = mdFiles.filter((f) =>
-    f.toLowerCase().includes(searchQuery.toLowerCase()),
+  const filteredFiles = useMemo(
+    () =>
+      mdFiles.filter((f) => f.toLowerCase().includes(searchQuery.toLowerCase())),
+    [mdFiles, searchQuery],
   );
 
   const { data: fileContent = "", isLoading: loadingContent } = useQuery({

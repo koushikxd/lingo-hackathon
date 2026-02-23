@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useEffect, useRef, useState } from "react";
+import { use, useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { useChat } from "@ai-sdk/react";
 import {
@@ -244,12 +244,17 @@ export default function RepoChatPage({
   const inputRef = useRef<HTMLInputElement>(null);
   const [input, setInput] = useState("");
   const { t } = useUiI18n();
+  const transport = useMemo(
+    () =>
+      new DefaultChatTransport({
+        api: "/api/chat",
+        body: { repositoryId: id },
+      }),
+    [id],
+  );
 
   const { messages, sendMessage, status, setMessages } = useChat({
-    transport: new DefaultChatTransport({
-      api: "/api/chat",
-      body: { repositoryId: id },
-    }),
+    transport,
     sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithToolCalls,
   });
 

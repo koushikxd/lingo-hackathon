@@ -1,6 +1,13 @@
 "use client";
 
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Globe, Loader2 } from "lucide-react";
 
@@ -28,14 +35,7 @@ const UiI18nContext = createContext<UiI18nContextValue>({
 });
 
 function TranslationIndicator({ locale }: { locale: string }) {
-  const [visible, setVisible] = useState(true);
   const label = LANGUAGES.find((l) => l.code === locale)?.label ?? locale;
-
-  useEffect(() => {
-    setVisible(true);
-  }, [locale]);
-
-  if (!visible) return null;
 
   return (
     <div className="fixed top-3 right-3 z-9999 flex items-center gap-2 border border-neutral-700 bg-neutral-900/95 px-3 py-1.5 shadow-lg backdrop-blur-sm animate-in fade-in slide-in-from-top-2 duration-300">
@@ -118,10 +118,16 @@ export function UiI18nProvider({ children }: { children: React.ReactNode }) {
     }
   }, [justFinished, locale]);
 
-  const messages =
-    locale === "en"
-      ? UI_MESSAGES_EN
-      : { ...UI_MESSAGES_EN, ...translatedMessages };
+  const messages = useMemo(
+    () =>
+      locale === "en"
+        ? UI_MESSAGES_EN
+        : { ...UI_MESSAGES_EN, ...translatedMessages },
+    [locale, translatedMessages],
+  );
+  const handleDone = useCallback(() => {
+    setShowDone(false);
+  }, []);
 
   const value = useMemo<UiI18nContextValue>(
     () => ({
@@ -140,10 +146,7 @@ export function UiI18nProvider({ children }: { children: React.ReactNode }) {
       {children}
       {isTranslating && <TranslationIndicator locale={locale} />}
       {!isTranslating && showDone && (
-        <TranslationDone
-          locale={doneLocale}
-          onDone={() => setShowDone(false)}
-        />
+        <TranslationDone locale={doneLocale} onDone={handleDone} />
       )}
     </UiI18nContext.Provider>
   );

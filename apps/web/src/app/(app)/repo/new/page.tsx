@@ -80,21 +80,26 @@ export default function NewRepoPage() {
   const pendingRedirectRef = useRef<{ repositoryId?: string } | null>(null);
   const redirectRef = useRef<((id?: string) => void) | null>(null);
   const { t } = useUiI18n();
-  const indexingSteps = [
-    t("newRepo.indexStep1"),
-    t("newRepo.indexStep2"),
-    t("newRepo.indexStep3"),
-    t("newRepo.indexStep4"),
-    t("newRepo.indexStep5"),
-  ];
+  const indexingSteps = useMemo(
+    () => [
+      t("newRepo.indexStep1"),
+      t("newRepo.indexStep2"),
+      t("newRepo.indexStep3"),
+      t("newRepo.indexStep4"),
+      t("newRepo.indexStep5"),
+    ],
+    [t],
+  );
 
-  redirectRef.current = (repositoryId?: string) => {
-    toast.success(t("newRepo.toastIndexSuccess"));
-    queryClient.invalidateQueries({
-      queryKey: trpc.repository.list.queryOptions().queryKey,
-    });
-    router.push(`/repo/${repositoryId}` as never);
-  };
+  useEffect(() => {
+    redirectRef.current = (repositoryId?: string) => {
+      toast.success(t("newRepo.toastIndexSuccess"));
+      queryClient.invalidateQueries({
+        queryKey: trpc.repository.list.queryOptions().queryKey,
+      });
+      router.push(`/repo/${repositoryId}` as never);
+    };
+  }, [queryClient, router, t]);
 
   const { data: repos = [], isLoading: loadingRepos } = useQuery<GitHubRepo[]>({
     queryKey: ["github-repos"],
